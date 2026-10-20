@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { STORE_INFO, FREE_ACCESSORIES_NOTE } from "@/lib/constants";
 import { Glasses, MapPin, Phone, Mail, Clock, ShieldCheck, Truck, Package, MessageCircle } from "lucide-react";
 
@@ -54,8 +55,13 @@ export default function Footer() {
           {/* Brand Intro */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-navy-800 flex items-center justify-center text-orange-500">
-                <Glasses className="w-6 h-6" />
+              <div className="relative w-11 h-11 rounded-xl overflow-hidden bg-white p-1 shadow-md shrink-0">
+                <Image
+                  src="/images/hassan-logo.png"
+                  alt="Hassan Optics Logo"
+                  fill
+                  className="object-contain p-0.5"
+                />
               </div>
               <span className="font-extrabold text-xl text-white tracking-tight">
                 HASSAN <span className="text-orange-500">OPTICS</span>

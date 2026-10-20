@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X, MapPin, Calendar, Search, Glasses } from "lucide-react";
+import { ShoppingBag, Menu, X, MapPin, Calendar, Search } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { STORE_INFO } from "@/lib/constants";
 
@@ -36,24 +37,30 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs print:hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
-            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-navy-900 flex items-center justify-center text-white shadow-md group-hover:bg-navy-800 transition shrink-0">
-              <Glasses className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 group-hover:rotate-12 transition-transform duration-300" />
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
+          {/* Brand Logo with Official Hassan Optics Logo */}
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-white shadow-xs border border-slate-200 p-1 shrink-0 group-hover:border-[#F15A24]/40 transition-colors">
+              <Image
+                src="/images/hassan-logo.png"
+                alt="Hassan Optics Logo"
+                fill
+                priority
+                className="object-contain p-0.5"
+              />
             </div>
-            <div className="min-w-0">
-              <span className="font-extrabold text-base sm:text-2xl tracking-tight text-navy-900 group-hover:text-navy-800 transition block truncate">
+            <div className="flex flex-col shrink-0">
+              <span className="font-black text-lg sm:text-2xl tracking-tight text-navy-900 group-hover:text-navy-800 transition whitespace-nowrap">
                 HASSAN <span className="text-orange-500">OPTICS</span>
               </span>
-              <span className="block text-[9px] sm:text-[10px] tracking-wider uppercase font-semibold text-slate-500 truncate">
+              <span className="block text-[9px] sm:text-[10px] tracking-wider uppercase font-bold text-slate-500 whitespace-nowrap">
                 {STORE_INFO.tagline}
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5 shrink-0">
             {navLinks.map((link) => {
               const isActive =
                 link.href === "/"
@@ -65,10 +72,10 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition border border-orange-200"
+                    className="flex items-center gap-1 px-2.5 xl:px-3 py-1.5 xl:py-2 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition border border-orange-200 whitespace-nowrap shrink-0"
                   >
-                    <Calendar className="w-3.5 h-3.5" />
-                    {link.name}
+                    <Calendar className="w-3.5 h-3.5 shrink-0" />
+                    <span>{link.name}</span>
                   </Link>
                 );
               }
@@ -77,9 +84,9 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-semibold transition whitespace-nowrap shrink-0 ${
                     isActive
-                      ? "text-orange-500 bg-orange-50/50 font-semibold"
+                      ? "text-orange-500 bg-orange-50/50 font-bold"
                       : "text-slate-700 hover:text-navy-900 hover:bg-slate-50"
                   }`}
                 >
@@ -104,7 +111,7 @@ export default function Navbar() {
             <button
               onClick={openCart}
               aria-label="View Cart"
-              className="relative flex items-center gap-1.5 sm:gap-2 bg-navy-900 hover:bg-navy-800 text-white p-2 sm:px-4 sm:py-2.5 rounded-full font-medium text-xs sm:text-sm transition shadow-sm active:scale-95"
+              className="relative flex items-center gap-1.5 sm:gap-2 bg-navy-900 hover:bg-navy-800 text-white p-2 sm:px-4 sm:py-2.5 rounded-full font-medium text-xs sm:text-sm transition shadow-sm active:scale-95 shrink-0"
             >
               <ShoppingBag className="w-4 h-4 text-orange-400" />
               <span className="hidden sm:inline">Cart</span>

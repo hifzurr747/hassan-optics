@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Glasses,
@@ -38,16 +39,22 @@ export default function AdminHeader() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Portal Tag */}
-          <div className="flex items-center gap-3">
-            <Link href="/admin" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#F15A24] flex items-center justify-center text-white font-bold">
-                <Glasses className="w-5 h-5" />
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/admin" className="flex items-center gap-2.5">
+              <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-white p-1 shrink-0 shadow-xs border border-white/20">
+                <Image
+                  src="/images/hassan-logo.png"
+                  alt="Hassan Optics Logo"
+                  fill
+                  priority
+                  className="object-contain p-0.5"
+                />
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-sm tracking-wider uppercase">
+                <span className="font-extrabold text-sm tracking-wider uppercase whitespace-nowrap">
                   Hassan Optics
                 </span>
-                <span className="text-[10px] text-orange-300 font-semibold tracking-widest uppercase">
+                <span className="text-[10px] text-orange-300 font-semibold tracking-widest uppercase whitespace-nowrap">
                   Admin Portal
                 </span>
               </div>

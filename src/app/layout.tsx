@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   title: "Hassan Optics | Clear Vision • Better Life | Mianwali",
   description:
     "Hassan Optics (Faisal Plaza, Gulburg Chowk, Mianwali) - Premium ready-to-wear frames, blue-cut computer protection glasses, polarized sunglasses & cosmetic contact lenses with nationwide Cash on Delivery (COD).",
+  icons: {
+    icon: "/images/hassan-logo.png",
+    apple: "/images/hassan-logo.png",
+  },
   keywords: [
     "Hassan Optics",
     "Mianwali Optician",
