@@ -307,8 +307,9 @@ export default function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-xs text-slate-900 truncate">{item.name}</h4>
                       <p className="text-[11px] text-slate-500">
-                        {item.selectedColor && `${item.selectedColor} • `}
-                        {item.lensOption}
+                        {item.selectedColor && `${item.selectedColor}`}
+                        {item.selectedColor && item.lensOption && !["Standard Pack", "Standard", "None"].includes(item.lensOption) && " • "}
+                        {item.lensOption && !["Standard Pack", "Standard", "None"].includes(item.lensOption) && item.lensOption}
                       </p>
                       <div className="text-[11px] font-medium text-slate-400">
                         Qty: {item.quantity} × {formatPrice(item.unitPrice + item.lensPrice)}
@@ -327,7 +328,7 @@ export default function CheckoutPage() {
                 <div className="text-xs text-slate-700">
                   <span className="font-bold text-slate-900">Free Accessories Included:</span>
                   <div className="text-[11px] text-slate-600">
-                    Hard protective case + Microfiber cleaning cloth
+                    Protective hard case &amp; cloth for eyewear • Sterile storage case for contact lenses
                   </div>
                 </div>
               </div>

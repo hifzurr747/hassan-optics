@@ -80,28 +80,52 @@ export default function ProductDetailClient({
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
 
+  const isEyeglasses = product.category === "eyeglasses";
+  const isSunglasses = product.category === "sunglasses";
+  const isContactLenses = product.category === "contact-lenses";
+
   // States
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState<string>(
     product.variants[0]?.colorName || "Standard"
   );
-  // Default to Blue Cut (most popular) or first lens
-  const defaultLens =
-    lensOptions.find((l) => l.name.includes("Blue Cut")) || lensOptions[0];
-  const [selectedLens, setSelectedLens] = useState<LensOption>(
-    defaultLens || {
+
+  // Default lens selection:
+  // ONLY eyeglasses get the zero-power frame lens selector options.
+  const defaultEyeglassLens =
+    lensOptions.find((l) => l.name.includes("Blue Cut")) ||
+    lensOptions[0] || {
       id: "demo",
       name: "Frame Only",
       price: 0,
       description: "Standard demo lenses",
-    }
+    };
+
+  const defaultNonEyeglassLens: LensOption = isSunglasses
+    ? {
+        id: "sunglasses-standard",
+        name: "UV400 Polarized (Included)",
+        price: 0,
+        description: "100% UV Protection & Anti-Glare Shield",
+      }
+    : {
+        id: "contact-standard",
+        name: "Standard Pack",
+        price: 0,
+        description: "Original factory-sealed packaging",
+      };
+
+  const [selectedLens, setSelectedLens] = useState<LensOption>(
+    isEyeglasses ? defaultEyeglassLens : defaultNonEyeglassLens
   );
+
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
 
   const activePrice = product.discountPrice ?? product.basePrice;
-  const totalPrice = (activePrice + selectedLens.price) * quantity;
+  const lensPrice = isEyeglasses ? selectedLens.price : 0;
+  const totalPrice = (activePrice + lensPrice) * quantity;
   const hasDiscount = product.discountPrice && product.discountPrice < product.basePrice;
 
   const handleAddToCart = (redirectAfter = false) => {
@@ -112,9 +136,13 @@ export default function ProductDetailClient({
       name: product.name,
       brand: product.brand,
       image: product.images[0]?.url || "",
-      selectedColor,
-      lensOption: selectedLens.name,
-      lensPrice: selectedLens.price,
+      selectedColor: product.variants.length > 0 ? selectedColor : undefined,
+      lensOption: isEyeglasses
+        ? selectedLens.name
+        : isSunglasses
+        ? "UV400 Polarized (Included)"
+        : "Standard Pack",
+      lensPrice: isEyeglasses ? selectedLens.price : 0,
       unitPrice: activePrice,
       quantity,
     });
@@ -187,27 +215,43 @@ export default function ProductDetailClient({
             )}
 
             {/* Free Accessories Box */}
-            <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-[#F15A24] shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
-                  {FREE_ACCESSORIES_NOTE.title}
-                </h4>
-                <p className="text-xs text-slate-600 mt-1">
-                  Magnetic protective hard case + ultra-fine scratchless cloth included in every parcel automatically at Rs. 0.
-                </p>
+            {isContactLenses ? (
+              <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-[#F15A24] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
+                    Free Antimicrobial Lens Case Included
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Every order includes a sterile leakproof contact lens storage case automatically at Rs. 0.
+                  </p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-orange-50/70 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-[#F15A24] shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
+                    {FREE_ACCESSORIES_NOTE.title}
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Magnetic protective hard case + ultra-fine scratchless cloth included in every parcel automatically at Rs. 0.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Prescription Store Visit Callout */}
             <div className="bg-slate-900 text-white rounded-2xl p-4 flex items-start justify-between gap-3 shadow-md">
               <div className="space-y-1">
                 <div className="text-[11px] font-bold text-orange-400 uppercase tracking-wider flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" />
-                  Need Optical Power Cutting?
+                  {isContactLenses ? "Need Prescription Contact Lenses?" : "Need Optical Power Cutting?"}
                 </div>
                 <p className="text-xs text-slate-300">
-                  We test eyes computerized in our Faisal Plaza, Mianwali store. Online frames are Zero-Power / Screen Protection.
+                  {isContactLenses
+                    ? "We test cornea curvature and eyesight computerized in our Faisal Plaza, Mianwali store for customized vision."
+                    : "We test eyes computerized in our Faisal Plaza, Mianwali store. Online frames are Zero-Power / Screen Protection."}
                 </p>
               </div>
               <Link
@@ -239,14 +283,22 @@ export default function ProductDetailClient({
             {/* Price Display */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
               <div>
-                <span className="text-xs text-slate-500 block">Total Price (Frame + Lens):</span>
+                <span className="text-xs text-slate-500 block">
+                  {isEyeglasses
+                    ? "Total Price (Frame + Lens):"
+                    : isSunglasses
+                    ? "Total Price (Frame + UV Lenses):"
+                    : "Total Price:"}
+                </span>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-extrabold text-[#1B2A4A]">
                     {formatPrice(totalPrice)}
                   </span>
                   {hasDiscount && (
                     <span className="text-sm text-slate-400 line-through">
-                      {formatPrice(product.basePrice + selectedLens.price)}
+                      {formatPrice(
+                        (product.basePrice + (isEyeglasses ? selectedLens.price : 0)) * quantity
+                      )}
                     </span>
                   )}
                 </div>
@@ -294,8 +346,8 @@ export default function ProductDetailClient({
               </div>
             )}
 
-            {/* 1-Click Zero-Power Lens Add-on Selector */}
-            {lensOptions.length > 0 && (
+            {/* 1-Click Zero-Power Lens Add-on Selector (ONLY for Eyeglasses) */}
+            {isEyeglasses && lensOptions.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -346,21 +398,33 @@ export default function ProductDetailClient({
             )}
 
             {/* Frame Dimensions & Size Guide Trigger */}
-            <div className="pt-2 flex items-center justify-between text-xs text-slate-600 border-t border-slate-100">
-              <div className="flex items-center gap-3">
-                {product.lensWidth && <span>Lens: <strong>{product.lensWidth}mm</strong></span>}
-                {product.bridgeWidth && <span>Bridge: <strong>{product.bridgeWidth}mm</strong></span>}
-                {product.templeLength && <span>Temple: <strong>{product.templeLength}mm</strong></span>}
+            {(isEyeglasses || isSunglasses) && (product.lensWidth || product.bridgeWidth || product.templeLength) ? (
+              <div className="pt-2 flex items-center justify-between text-xs text-slate-600 border-t border-slate-100">
+                <div className="flex items-center gap-3">
+                  {product.lensWidth && <span>Lens: <strong>{product.lensWidth}mm</strong></span>}
+                  {product.bridgeWidth && <span>Bridge: <strong>{product.bridgeWidth}mm</strong></span>}
+                  {product.templeLength && <span>Temple: <strong>{product.templeLength}mm</strong></span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSizeGuideOpen(true)}
+                  className="inline-flex items-center gap-1 text-[#F15A24] font-semibold hover:underline"
+                >
+                  <Ruler className="w-3.5 h-3.5" />
+                  <span>Size Guide</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsSizeGuideOpen(true)}
-                className="inline-flex items-center gap-1 text-[#F15A24] font-semibold hover:underline"
-              >
-                <Ruler className="w-3.5 h-3.5" />
-                <span>Size Guide</span>
-              </button>
-            </div>
+            ) : isContactLenses ? (
+              <div className="pt-2 flex items-center justify-between text-xs text-slate-600 border-t border-slate-100">
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>100% Sterile & Sealed Eye Care</span>
+                </div>
+                <span className="text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full text-[11px]">
+                  Ready to Dispatch
+                </span>
+              </div>
+            ) : null}
 
             {/* Quantity Selector & Action Buttons */}
             <div className="space-y-3 pt-2">
@@ -419,15 +483,24 @@ export default function ProductDetailClient({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Material</div>
-                  <div className="font-semibold text-slate-800">{product.material || "Premium Acetate"}</div>
+                  <div className="text-slate-400 text-[10px]">{isContactLenses ? "Formula / Type" : "Material"}</div>
+                  <div className="font-semibold text-slate-800">
+                    {product.material || (isContactLenses ? "HydraGlyde Formula" : "Premium Acetate")}
+                  </div>
                 </div>
+                {product.shape ? (
+                  <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="text-slate-400 text-[10px]">Shape</div>
+                    <div className="font-semibold text-slate-800">{product.shape}</div>
+                  </div>
+                ) : isContactLenses ? (
+                  <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="text-slate-400 text-[10px]">Compatibility</div>
+                    <div className="font-semibold text-slate-800">All Soft Contact Lenses</div>
+                  </div>
+                ) : null}
                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Shape</div>
-                  <div className="font-semibold text-slate-800">{product.shape || "Classic"}</div>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="text-slate-400 text-[10px]">Gender</div>
+                  <div className="text-slate-400 text-[10px]">Gender / Fit</div>
                   <div className="font-semibold text-slate-800">{product.gender || "Unisex"}</div>
                 </div>
               </div>
@@ -438,7 +511,7 @@ export default function ProductDetailClient({
         {/* Customer Reviews Section */}
         <ProductReviews productName={product.name} />
 
-        {/* Similar Frames You May Like */}
+        {/* Similar Products */}
         {relatedProducts.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center justify-between mb-6">
@@ -447,7 +520,11 @@ export default function ProductDetailClient({
                   More from Hassan Optics
                 </span>
                 <h3 className="text-xl sm:text-2xl font-extrabold text-[#1B2A4A] mt-0.5">
-                  Similar Frames You May Like
+                  {isContactLenses
+                    ? "More Contact Lenses & Solutions"
+                    : isSunglasses
+                    ? "Similar Sunglasses You May Like"
+                    : "Similar Frames You May Like"}
                 </h3>
               </div>
               <Link

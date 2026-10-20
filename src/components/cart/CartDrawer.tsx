@@ -130,10 +130,12 @@ export default function CartDrawer() {
                             Color: {item.selectedColor}
                           </span>
                         )}
-                        <span className="text-[10px] bg-navy-50 text-navy-800 font-semibold px-2 py-0.5 rounded-md border border-navy-100">
-                          {item.lensOption}
-                          {item.lensPrice > 0 && ` (+${formatPrice(item.lensPrice)})`}
-                        </span>
+                        {item.lensOption && !["Standard Pack", "Standard", "None"].includes(item.lensOption) && (
+                          <span className="text-[10px] bg-navy-50 text-navy-800 font-semibold px-2 py-0.5 rounded-md border border-navy-100">
+                            {item.lensOption}
+                            {item.lensPrice > 0 && ` (+${formatPrice(item.lensPrice)})`}
+                          </span>
+                        )}
                       </div>
                     </div>
 

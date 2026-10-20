@@ -39,3 +39,6 @@ dev.db
 dev.db-journal
 *.db
 *.db-journal
+
+# Local Netlify folder
+.netlify

@@ -128,8 +128,9 @@ export default async function OrderSuccessPage({ params }: OrderSuccessPageProps
                     {item.productName}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {item.selectedColor && `${item.selectedColor} • `}
-                    {item.lensOption}
+                    {item.selectedColor && `${item.selectedColor}`}
+                    {item.selectedColor && item.lensOption && !["Standard Pack", "Standard", "None"].includes(item.lensOption) && " • "}
+                    {item.lensOption && !["Standard Pack", "Standard", "None"].includes(item.lensOption) && item.lensOption}
                   </div>
                   <div className="text-[11px] text-slate-400">
                     Qty: {item.quantity} × {formatPrice(item.unitPrice + item.lensPrice)}

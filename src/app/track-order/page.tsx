@@ -224,7 +224,9 @@ export default async function TrackOrderPage({ searchParams }: TrackOrderPagePro
                       <div>
                         <span className="font-semibold text-slate-800">{item.productName}</span>
                         <span className="text-slate-400 block text-[11px]">
-                          {item.lensOption} • Qty {item.quantity}
+                          {item.selectedColor ? `${item.selectedColor} • ` : ""}
+                          {!["Standard Pack", "Standard", "None"].includes(item.lensOption) ? `${item.lensOption} • ` : ""}
+                          Qty {item.quantity}
                         </span>
                       </div>
                       <span className="font-medium text-slate-700">
