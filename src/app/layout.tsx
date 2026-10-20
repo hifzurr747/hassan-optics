@@ -1,6 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import StoreLayout from "@/components/common/StoreLayout";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0B1322",
+};
 
 export const metadata: Metadata = {
   title: "Hassan Optics | Clear Vision • Better Life | Mianwali",

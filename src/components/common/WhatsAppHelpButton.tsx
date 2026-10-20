@@ -8,7 +8,7 @@ export default function WhatsAppHelpButton() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end print:hidden">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex flex-col items-end print:hidden">
       {/* Tooltip / Helper Bubble */}
       {isOpen && (
         <div className="mb-3 bg-white text-navy-950 p-4 rounded-2xl shadow-2xl border border-slate-200 max-w-xs animate-in fade-in slide-in-from-bottom-2">
@@ -46,9 +46,9 @@ export default function WhatsAppHelpButton() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Open Customer Helpline"
-        className="group flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
+        className="group flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white p-3 sm:px-4 sm:py-3 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         <span className="hidden sm:inline text-xs font-bold tracking-wide">
           Helpline
         </span>

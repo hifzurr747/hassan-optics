@@ -100,15 +100,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         </div>
 
         {/* Filter Pills */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs mb-8 flex flex-wrap items-center gap-2 text-xs">
-          <span className="font-bold text-slate-700 flex items-center gap-1 mr-2">
+        <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-xs mb-6 sm:mb-8 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+          <span className="font-bold text-slate-700 flex items-center gap-1 mr-1 sm:mr-2">
             <SlidersHorizontal className="w-3.5 h-3.5 text-[#F15A24]" />
             Filter:
           </span>
 
           <Link
             href="/shop"
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-xs ${
               !category && !shape && !gender
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -119,7 +119,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
           <Link
             href="/shop?category=eyeglasses"
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-xs ${
               category === "eyeglasses"
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -130,7 +130,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
           <Link
             href="/shop?category=sunglasses"
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-xs ${
               category === "sunglasses"
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -141,7 +141,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
           <Link
             href="/shop?category=contact-lenses"
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+            className={`px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition-colors text-xs ${
               category === "contact-lenses"
                 ? "bg-[#1B2A4A] text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
@@ -184,7 +184,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

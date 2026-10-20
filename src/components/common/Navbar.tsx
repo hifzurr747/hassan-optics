@@ -35,18 +35,18 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs print:hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-navy-900 flex items-center justify-center text-white shadow-md group-hover:bg-navy-800 transition">
-              <Glasses className="w-6 h-6 text-orange-500 group-hover:rotate-12 transition-transform duration-300" />
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-navy-900 flex items-center justify-center text-white shadow-md group-hover:bg-navy-800 transition shrink-0">
+              <Glasses className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 group-hover:rotate-12 transition-transform duration-300" />
             </div>
-            <div>
-              <span className="font-extrabold text-2xl tracking-tight text-navy-900 group-hover:text-navy-800 transition">
+            <div className="min-w-0">
+              <span className="font-extrabold text-base sm:text-2xl tracking-tight text-navy-900 group-hover:text-navy-800 transition block truncate">
                 HASSAN <span className="text-orange-500">OPTICS</span>
               </span>
-              <span className="block text-[10px] tracking-wider uppercase font-semibold text-slate-500">
+              <span className="block text-[9px] sm:text-[10px] tracking-wider uppercase font-semibold text-slate-500 truncate">
                 {STORE_INFO.tagline}
               </span>
             </div>
@@ -90,26 +90,26 @@ export default function Navbar() {
           </nav>
 
           {/* Right Action Icons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Quick Catalog Search Link */}
             <Link
               href="/shop"
               aria-label="Search Catalog"
-              className="p-2.5 text-slate-600 hover:text-navy-900 hover:bg-slate-100 rounded-full transition"
+              className="p-2 sm:p-2.5 text-slate-600 hover:text-navy-900 hover:bg-slate-100 rounded-full transition"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
 
             {/* Cart Trigger */}
             <button
               onClick={openCart}
               aria-label="View Cart"
-              className="relative flex items-center gap-2 bg-navy-900 hover:bg-navy-800 text-white px-4 py-2.5 rounded-full font-medium text-sm transition shadow-sm active:scale-95"
+              className="relative flex items-center gap-1.5 sm:gap-2 bg-navy-900 hover:bg-navy-800 text-white p-2 sm:px-4 sm:py-2.5 rounded-full font-medium text-xs sm:text-sm transition shadow-sm active:scale-95"
             >
               <ShoppingBag className="w-4 h-4 text-orange-400" />
               <span className="hidden sm:inline">Cart</span>
               {itemCount > 0 && (
-                <span className="bg-orange-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-in zoom-in">
+                <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center animate-in zoom-in">
                   {itemCount}
                 </span>
               )}
@@ -121,7 +121,7 @@ export default function Navbar() {
               className="lg:hidden p-2 text-slate-700 hover:text-navy-900 hover:bg-slate-100 rounded-lg transition"
               aria-label="Toggle navigation menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
           </div>
         </div>

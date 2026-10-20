@@ -141,10 +141,10 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen py-10 md:py-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1B2A4A]">
+    <div className="bg-slate-50 min-h-screen py-6 sm:py-10 md:py-14">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-[#1B2A4A]">
             Checkout & Cash on Delivery (COD)
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm mt-1">
@@ -159,10 +159,10 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* Left Column: Customer & Delivery Details */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-5">
+          <div className="lg:col-span-7 space-y-5 sm:space-y-6">
+            <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs space-y-4 sm:space-y-5">
               <div className="flex items-center gap-2 text-[#1B2A4A] font-bold text-base pb-3 border-b border-slate-100">
                 <User className="w-5 h-5 text-[#F15A24]" />
                 <span>Customer & Contact Information</span>
@@ -287,7 +287,7 @@ export default function CheckoutPage() {
 
           {/* Right Column: Order Summary & Confirmation */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xs space-y-6">
+            <div className="bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs space-y-4 sm:space-y-6">
               <h3 className="font-bold text-[#1B2A4A] text-base pb-3 border-b border-slate-100 flex items-center justify-between">
                 <span>Order Summary</span>
                 <span className="text-xs text-slate-500 font-normal">

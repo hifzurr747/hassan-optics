@@ -156,10 +156,10 @@ export default function ProductDetailClient({
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen py-8 md:py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-slate-50 min-h-screen py-4 sm:py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-slate-500 mb-6">
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap">
           <Link href="/" className="hover:text-[#F15A24]">Home</Link>
           <span>/</span>
           <Link href="/shop" className="hover:text-[#F15A24]">Shop</Link>
@@ -168,11 +168,11 @@ export default function ProductDetailClient({
         </div>
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-200 shadow-xs">
           {/* Images Column */}
           <div className="lg:col-span-6 space-y-4">
             {/* Primary Display */}
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
+            <div className="relative aspect-square sm:aspect-[4/3] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
               <Image
                 src={
                   product.images[selectedImage]?.url ||
