@@ -12,8 +12,21 @@ export async function POST(request: Request) {
       );
     }
 
+    const found = await prisma.eyeTestAppointment.findFirst({
+      where: {
+        OR: [{ id: appointmentId }, { appointmentRef: appointmentId }],
+      },
+    });
+
+    if (!found) {
+      return NextResponse.json(
+        { error: "Appointment not found" },
+        { status: 404 }
+      );
+    }
+
     const updated = await prisma.eyeTestAppointment.update({
-      where: { id: appointmentId },
+      where: { id: found.id },
       data: {
         status,
         notes: notes !== undefined ? notes : undefined,
