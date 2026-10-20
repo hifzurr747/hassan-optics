@@ -10,7 +10,7 @@ function createPrismaClient(): PrismaClient {
   const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
 
   if (tursoUrl) {
-    const { PrismaLibSql } = require("@prisma/adapter-libsql");
+    const { PrismaLibSql } = require("@prisma/adapter-libsql/web");
     const adapter = new PrismaLibSql({
       url: tursoUrl,
       authToken: tursoAuthToken,
