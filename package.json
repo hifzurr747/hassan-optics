@@ -11,7 +11,9 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "@prisma/adapter-better-sqlite3": "^7.10.1",
+    "@prisma/adapter-libsql": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "better-sqlite3": "^13.0.3",
     "clsx": "^2.1.1",
