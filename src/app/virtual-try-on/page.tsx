@@ -1,13 +1,14 @@
 import prisma from "@/lib/prisma";
 import VirtualTryOnClient from "@/components/try-on/VirtualTryOnClient";
+import Script from "next/script";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Virtual Eyewear Try-On • See Frames on Your Face | Hassan Optics",
+  title: "Virtual Eyewear Try-On • AI Auto-Fit Mirror | Hassan Optics",
   description:
-    "Upload your photo or choose a model face to virtually try on Ray-Ban, Dior, and designer eyeglasses & sunglasses before buying with Cash on Delivery.",
+    "Upload your photo or use live camera to virtually try on Ray-Ban, Dior, and designer eyeglasses & sunglasses with instant AI face auto-fit before buying with Cash on Delivery.",
 };
 
 const SHAPE_FRAME_MAP: Record<string, string> = {
@@ -69,5 +70,17 @@ export default async function VirtualTryOnPage({
     };
   });
 
-  return <VirtualTryOnClient products={products} initialSlug={initialSlug} />;
+  return (
+    <>
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"
+        strategy="afterInteractive"
+      />
+      <Script
+        src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"
+        strategy="afterInteractive"
+      />
+      <VirtualTryOnClient products={products} initialSlug={initialSlug} />
+    </>
+  );
 }
