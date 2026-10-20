@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X, MapPin, Calendar, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, MapPin, Calendar, Search, Sparkles } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { STORE_INFO } from "@/lib/constants";
 
@@ -27,11 +27,11 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Eyeglasses", href: "/shop?category=eyeglasses" },
     { name: "Sunglasses", href: "/sunglasses" },
+    { name: "Virtual Try-On", href: "/virtual-try-on", isNew: true },
     { name: "Contact Lenses", href: "/contact-lenses" },
     { name: "Face Shape Guide", href: "/face-shape-guide" },
     { name: "Book Eye Test", href: "/book-eye-test", highlight: true },
     { name: "Track Order", href: "/track-order" },
-    { name: "Store Locator", href: "/store-locator" },
   ];
 
   return (
@@ -76,6 +76,22 @@ export default function Navbar() {
                   >
                     <Calendar className="w-3.5 h-3.5 shrink-0" />
                     <span>{link.name}</span>
+                  </Link>
+                );
+              }
+
+              if (link.isNew) {
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className="flex items-center gap-1 px-2 xl:px-2.5 py-1.5 xl:py-2 rounded-lg text-xs xl:text-sm font-bold text-slate-800 hover:text-[#F15A24] transition whitespace-nowrap shrink-0 group"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#F15A24] group-hover:rotate-12 transition-transform" />
+                    <span>{link.name}</span>
+                    <span className="text-[9px] bg-[#F15A24] text-white px-1.5 py-0.2 rounded-full font-extrabold uppercase">
+                      New
+                    </span>
                   </Link>
                 );
               }

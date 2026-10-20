@@ -451,6 +451,17 @@ export default function ProductDetailClient({
                 </div>
               </div>
 
+              {/* Virtual Try-On Button (Only for Eyeglasses and Sunglasses) */}
+              {product.category !== "contact-lenses" && (
+                <Link
+                  href={`/virtual-try-on?frame=${product.slug}`}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 hover:from-orange-100 hover:to-amber-100 text-[#F15A24] font-extrabold text-xs sm:text-sm rounded-xl border border-orange-200 shadow-xs hover:shadow-md transition-all group"
+                >
+                  <Sparkles className="w-4 h-4 text-[#F15A24] group-hover:rotate-12 transition-transform" />
+                  <span>👓 Try On Your Face (Virtual Mirror)</span>
+                </Link>
+              )}
+
               {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <!-- Blue Cut Anti-Reflective Lens Sheen -->
+    <linearGradient id="blueCutSheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.16"/>
+      <stop offset="35%" stop-color="#818CF8" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="blackAcetate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="40%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="specularLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Frame & Lens -->
+  <g id="left-rect">
+    <!-- Blue Cut Lens Glass -->
+    <rect x="75" y="60" width="185" height="120" rx="24" fill="url(#blueCutSheen)" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.3" />
+    <!-- Diagonal Reflection Ray -->
+    <path d="M 90 65 L 140 65 L 85 145 Z" fill="#FFFFFF" fill-opacity="0.08" />
+    <!-- Heavy Bold Acetate Rim -->
+    <rect x="65" y="50" width="205" height="140" rx="30" stroke="url(#blackAcetate)" stroke-width="16" />
+    <!-- Rim Specular Highlight on top edge -->
+    <path d="M 90 45 L 245 45" stroke="url(#specularLine)" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Rivet Pin -->
+    <circle cx="75" cy="62" r="2.5" fill="#E2E8F0" />
+  </g>
+
+  <!-- Right Frame & Lens -->
+  <g id="right-rect">
+    <!-- Blue Cut Lens Glass -->
+    <rect x="340" y="60" width="185" height="120" rx="24" fill="url(#blueCutSheen)" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.3" />
+    <!-- Diagonal Reflection Ray -->
+    <path d="M 355 65 L 405 65 L 350 145 Z" fill="#FFFFFF" fill-opacity="0.08" />
+    <!-- Heavy Bold Acetate Rim -->
+    <rect x="330" y="50" width="205" height="140" rx="30" stroke="url(#blackAcetate)" stroke-width="16" />
+    <!-- Rim Specular Highlight on top edge -->
+    <path d="M 355 45 L 510 45" stroke="url(#specularLine)" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Rivet Pin -->
+    <circle cx="525" cy="62" r="2.5" fill="#E2E8F0" />
+  </g>
+
+  <!-- Keyhole / Saddle Acetate Bridge -->
+  <path d="M 260 78 C 280 66, 320 66, 340 78 C 330 92, 315 98, 300 98 C 285 98, 270 92, 260 78 Z" fill="url(#blackAcetate)" />
+  <path d="M 260 72 C 280 62, 320 62, 340 72" stroke="url(#blackAcetate)" stroke-width="12" stroke-linecap="round" />
+
+  <!-- Outer Temples / Arms -->
+  <path d="M 60 75 L 20 70 L 5 76" stroke="url(#blackAcetate)" stroke-width="12" stroke-linecap="round" />
+  <path d="M 540 75 L 580 70 L 595 76" stroke="url(#blackAcetate)" stroke-width="12" stroke-linecap="round" />
+</svg>

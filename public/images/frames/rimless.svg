@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <linearGradient id="rimlessLens" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.10"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="gunmetal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Lens (Pure bevelled rimless edge) -->
+  <g id="left-rimless">
+    <rect x="75" y="65" width="180" height="110" rx="20" fill="url(#rimlessLens)" stroke="#94A3B8" stroke-width="1.5" stroke-opacity="0.4" />
+    <path d="M 85 70 L 135 70 L 80 145 Z" fill="#FFFFFF" fill-opacity="0.1" />
+    <!-- Titanium Mount Points -->
+    <!-- Inner mount -->
+    <circle cx="248" cy="115" r="3.5" fill="url(#gunmetal)" stroke="#1E293B" stroke-width="1" />
+    <!-- Outer mount -->
+    <circle cx="82" cy="115" r="3.5" fill="url(#gunmetal)" stroke="#1E293B" stroke-width="1" />
+  </g>
+
+  <!-- Right Lens (Pure bevelled rimless edge) -->
+  <g id="right-rimless">
+    <rect x="345" y="65" width="180" height="110" rx="20" fill="url(#rimlessLens)" stroke="#94A3B8" stroke-width="1.5" stroke-opacity="0.4" />
+    <path d="M 355 70 L 405 70 L 350 145 Z" fill="#FFFFFF" fill-opacity="0.1" />
+    <!-- Titanium Mount Points -->
+    <!-- Inner mount -->
+    <circle cx="352" cy="115" r="3.5" fill="url(#gunmetal)" stroke="#1E293B" stroke-width="1" />
+    <!-- Outer mount -->
+    <circle cx="518" cy="115" r="3.5" fill="url(#gunmetal)" stroke="#1E293B" stroke-width="1" />
+  </g>
+
+  <!-- Screwless Titanium Arched Bridge -->
+  <path d="M 248 115 C 275 85, 325 85, 352 115" stroke="url(#gunmetal)" stroke-width="5" stroke-linecap="round" />
+  <path d="M 248 115 C 275 85, 325 85, 352 115" stroke="#1E293B" stroke-width="1" />
+
+  <!-- Silicone Nose Pads -->
+  <ellipse cx="265" cy="130" rx="3" ry="7" fill="#F8FAFC" stroke="#64748B" stroke-width="1" opacity="0.8" />
+  <ellipse cx="335" cy="130" rx="3" ry="7" fill="#F8FAFC" stroke="#64748B" stroke-width="1" opacity="0.8" />
+
+  <!-- Minimalist End Pieces & Temples -->
+  <path d="M 82 115 L 35 112 L 15 118" stroke="url(#gunmetal)" stroke-width="4.5" stroke-linecap="round" />
+  <path d="M 518 115 L 565 112 L 585 118" stroke="url(#gunmetal)" stroke-width="4.5" stroke-linecap="round" />
+</svg>

@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <linearGradient id="catEyeGloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E1B4B"/>
+      <stop offset="40%" stop-color="#09090B"/>
+      <stop offset="100%" stop-color="#18181B"/>
+    </linearGradient>
+    <linearGradient id="catEyeLens" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4C1D95" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#1E1B4B" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#09090B" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Upswept Cat Eye -->
+  <g id="left-cateye">
+    <path d="M 60 45 C 130 55, 220 70, 255 90 C 265 125, 250 170, 215 190 C 175 210, 115 195, 90 160 C 65 125, 50 85, 60 45 Z" fill="url(#catEyeLens)" />
+    <!-- Glare Ray -->
+    <path d="M 80 55 L 140 60 L 75 140 Z" fill="#FFFFFF" fill-opacity="0.12" />
+    <!-- Dramatic Acetate Flare -->
+    <path d="M 50 35 C 130 50, 225 68, 260 88 C 272 125, 255 178, 215 200 C 170 222, 105 205, 80 165 C 50 120, 35 75, 50 35 Z" stroke="url(#catEyeGloss)" stroke-width="14" stroke-linejoin="round" />
+    <!-- Gold accent brow line -->
+    <path d="M 65 42 C 120 52, 190 64, 250 82" stroke="#EAB308" stroke-width="2.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Right Upswept Cat Eye -->
+  <g id="right-cateye">
+    <path d="M 540 45 C 470 55, 380 70, 345 90 C 335 125, 350 170, 385 190 C 425 210, 485 195, 510 160 C 535 125, 550 85, 540 45 Z" fill="url(#catEyeLens)" />
+    <!-- Glare Ray -->
+    <path d="M 520 55 L 460 60 L 525 140 Z" fill="#FFFFFF" fill-opacity="0.12" />
+    <!-- Dramatic Acetate Flare -->
+    <path d="M 550 35 C 470 50, 375 68, 340 88 C 328 125, 345 178, 385 200 C 430 222, 495 205, 520 165 C 550 120, 565 75, 550 35 Z" stroke="url(#catEyeGloss)" stroke-width="14" stroke-linejoin="round" />
+    <!-- Gold accent brow line -->
+    <path d="M 535 42 C 480 52, 410 64, 350 82" stroke="#EAB308" stroke-width="2.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Sleek Arched Bridge -->
+  <path d="M 252 86 C 275 72, 325 72, 348 86" stroke="url(#catEyeGloss)" stroke-width="10" stroke-linecap="round" />
+  <path d="M 255 84 C 276 72, 324 72, 345 84" stroke="#EAB308" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Temples -->
+  <path d="M 46 45 L 15 48 L 5 56" stroke="url(#catEyeGloss)" stroke-width="12" stroke-linecap="round" />
+  <path d="M 554 45 L 585 48 L 595 56" stroke="url(#catEyeGloss)" stroke-width="12" stroke-linecap="round" />
+</svg>

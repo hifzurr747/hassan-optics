@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <linearGradient id="clubmasterGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#EAB308"/>
+      <stop offset="50%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#CA8A04"/>
+    </linearGradient>
+    <linearGradient id="browlineAcetate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="lensTint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Eye -->
+  <g id="left-browline">
+    <!-- Lens -->
+    <path d="M 85 70 C 130 65, 220 65, 255 75 C 265 105, 260 160, 225 185 C 190 205, 120 200, 90 170 C 75 140, 75 100, 85 70 Z" fill="url(#lensTint)" />
+    <!-- Lower Gold Rim -->
+    <path d="M 80 85 C 75 130, 85 175, 105 188 C 145 208, 215 202, 245 178 C 265 145, 265 105, 260 85" stroke="url(#clubmasterGold)" stroke-width="4.5" stroke-linecap="round" fill="none" />
+    <!-- Heavy Upper Acetate Brow -->
+    <path d="M 60 78 C 65 60, 110 46, 170 46 C 220 46, 260 56, 270 76 C 265 86, 250 86, 240 82 C 190 70, 120 70, 80 84 C 70 86, 60 86, 60 78 Z" fill="url(#browlineAcetate)" stroke="#0F172A" stroke-width="2" />
+    <!-- Corner Rivet -->
+    <circle cx="76" cy="68" r="2.5" fill="url(#clubmasterGold)" />
+  </g>
+
+  <!-- Right Eye -->
+  <g id="right-browline">
+    <!-- Lens -->
+    <path d="M 515 70 C 470 65, 380 65, 345 75 C 335 105, 340 160, 375 185 C 410 205, 480 200, 510 170 C 525 140, 525 100, 515 70 Z" fill="url(#lensTint)" />
+    <!-- Lower Gold Rim -->
+    <path d="M 520 85 C 525 130, 515 175, 495 188 C 455 208, 385 202, 355 178 C 335 145, 335 105, 340 85" stroke="url(#clubmasterGold)" stroke-width="4.5" stroke-linecap="round" fill="none" />
+    <!-- Heavy Upper Acetate Brow -->
+    <path d="M 540 78 C 535 60, 490 46, 430 46 C 380 46, 340 56, 330 76 C 335 86, 350 86, 360 82 C 410 70, 480 70, 520 84 C 530 86, 540 86, 540 78 Z" fill="url(#browlineAcetate)" stroke="#0F172A" stroke-width="2" />
+    <!-- Corner Rivet -->
+    <circle cx="524" cy="68" r="2.5" fill="url(#clubmasterGold)" />
+  </g>
+
+  <!-- Metallic Gold Bridge -->
+  <path d="M 265 78 C 280 68, 320 68, 335 78" stroke="url(#clubmasterGold)" stroke-width="6" stroke-linecap="round" />
+  <path d="M 268 84 C 282 76, 318 76, 332 84" stroke="url(#clubmasterGold)" stroke-width="2.5" stroke-linecap="round" />
+
+  <!-- Nose Pads -->
+  <ellipse cx="280" cy="108" rx="4" ry="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" opacity="0.85" />
+  <ellipse cx="320" cy="108" rx="4" ry="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" opacity="0.85" />
+
+  <!-- Temples -->
+  <path d="M 58 74 L 18 72 L 5 78" stroke="url(#browlineAcetate)" stroke-width="10" stroke-linecap="round" />
+  <path d="M 542 74 L 582 72 L 595 78" stroke="url(#browlineAcetate)" stroke-width="10" stroke-linecap="round" />
+</svg>

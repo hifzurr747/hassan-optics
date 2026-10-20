@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <linearGradient id="titaniumSilver" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#94A3B8"/>
+      <stop offset="50%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#64748B"/>
+    </linearGradient>
+    <linearGradient id="roundLensTint" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Round Rim -->
+  <g id="left-round">
+    <circle cx="170" cy="115" r="75" fill="url(#roundLensTint)" />
+    <!-- Glare Arc -->
+    <path d="M 120 75 A 75 75 0 0 1 210 60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.3" />
+    <circle cx="170" cy="115" r="75" stroke="url(#titaniumSilver)" stroke-width="7" />
+    <circle cx="170" cy="115" r="75" stroke="#334155" stroke-width="1.5" />
+  </g>
+
+  <!-- Right Round Rim -->
+  <g id="right-round">
+    <circle cx="430" cy="115" r="75" fill="url(#roundLensTint)" />
+    <!-- Glare Arc -->
+    <path d="M 380 75 A 75 75 0 0 1 470 60" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.3" />
+    <circle cx="430" cy="115" r="75" stroke="url(#titaniumSilver)" stroke-width="7" />
+    <circle cx="430" cy="115" r="75" stroke="#334155" stroke-width="1.5" />
+  </g>
+
+  <!-- High Arched Titanium Bridge -->
+  <path d="M 245 110 C 270 80, 330 80, 355 110" stroke="url(#titaniumSilver)" stroke-width="6.5" stroke-linecap="round" />
+  <path d="M 245 110 C 270 80, 330 80, 355 110" stroke="#1E293B" stroke-width="1.5" />
+
+  <!-- Nose Pads -->
+  <ellipse cx="260" cy="125" rx="3.5" ry="8" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5" opacity="0.9" />
+  <ellipse cx="340" cy="125" rx="3.5" ry="8" fill="#F8FAFC" stroke="#64748B" stroke-width="1.5" opacity="0.9" />
+
+  <!-- Thin Wire Temples -->
+  <path d="M 95 115 L 35 110 L 10 118" stroke="url(#titaniumSilver)" stroke-width="5" stroke-linecap="round" />
+  <path d="M 505 115 L 565 110 L 590 118" stroke="url(#titaniumSilver)" stroke-width="5" stroke-linecap="round" />
+</svg>

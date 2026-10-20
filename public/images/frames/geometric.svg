@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" width="600" height="220" fill="none">
+  <defs>
+    <linearGradient id="geoGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="50%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="geoLens" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left Octagonal Lens & Rim -->
+  <g id="left-geo">
+    <polygon points="120,55 220,55 265,95 255,165 190,195 110,185 75,135 80,85" fill="url(#geoLens)" />
+    <!-- Glare line -->
+    <line x1="100" y1="70" x2="150" y2="70" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.3" />
+    <polygon points="120,55 220,55 265,95 255,165 190,195 110,185 75,135 80,85" stroke="url(#geoGold)" stroke-width="7" stroke-linejoin="round" />
+    <polygon points="120,55 220,55 265,95 255,165 190,195 110,185 75,135 80,85" stroke="#1E293B" stroke-width="1.5" stroke-linejoin="round" />
+  </g>
+
+  <!-- Right Octagonal Lens & Rim -->
+  <g id="right-geo">
+    <polygon points="480,55 380,55 335,95 345,165 410,195 490,185 525,135 520,85" fill="url(#geoLens)" />
+    <!-- Glare line -->
+    <line x1="450" y1="70" x2="500" y2="70" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" opacity="0.3" />
+    <polygon points="480,55 380,55 335,95 345,165 410,195 490,185 525,135 520,85" stroke="url(#geoGold)" stroke-width="7" stroke-linejoin="round" />
+    <polygon points="480,55 380,55 335,95 345,165 410,195 490,185 525,135 520,85" stroke="#1E293B" stroke-width="1.5" stroke-linejoin="round" />
+  </g>
+
+  <!-- Angular Bridge -->
+  <polyline points="265,95 300,75 335,95" stroke="url(#geoGold)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+  <polyline points="265,95 300,75 335,95" stroke="#1E293B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- Nose Pads -->
+  <ellipse cx="275" cy="118" rx="3.5" ry="8" fill="#F8FAFC" stroke="#64748B" stroke-width="1" opacity="0.9" />
+  <ellipse cx="325" cy="118" rx="3.5" ry="8" fill="#F8FAFC" stroke="#64748B" stroke-width="1" opacity="0.9" />
+
+  <!-- Temples -->
+  <path d="M 75,100 L 25,95 L 8,102" stroke="url(#geoGold)" stroke-width="6" stroke-linecap="round" />
+  <path d="M 525,100 L 575,95 L 592,102" stroke="url(#geoGold)" stroke-width="6" stroke-linecap="round" />
+</svg>
