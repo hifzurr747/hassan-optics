@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-950: #0B1322;
+  --color-navy-900: #1B2A4A;
+  --color-navy-800: #243862;
+  --color-navy-700: #334E84;
+  --color-navy-600: #4565A6;
+  --color-navy-100: #E8EEF8;
+  --color-navy-50: #F4F7FC;
+
+  --color-orange-600: #D84713;
+  --color-orange-500: #F15A24;
+  --color-orange-400: #FA794A;
+  --color-orange-100: #FFEFE8;
+  --color-orange-50: #FFF7F3;
+}
+
+:root {
+  --background: #FFFFFF;
+  --foreground: #0F172A;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Custom Print styles for Courier Labels and Invoices */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

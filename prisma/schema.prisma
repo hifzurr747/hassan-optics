@@ -1,0 +1,143 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. PRODUCT (Frames, Sunglasses, Contact Lenses)
+model Product {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  name            String
+  brand           String         // e.g. "Dior", "Ray-Ban", "Givenchy", "Bvlgari", "Hassan Signature"
+  category        String         // "eyeglasses" | "sunglasses" | "contact-lenses"
+  basePrice       Float          // In PKR
+  discountPrice   Float?         // Optional sale price
+  description     String
+  
+  // Optical & Physical Specs
+  frameType       String?        // "Full Rim" | "Half Rim" | "Rimless"
+  shape           String?        // "Round" | "Square" | "Aviator" | "Rectangle" | "Cat Eye"
+  material        String?        // "Acetate" | "Titanium" | "TR90" | "Metal"
+  gender          String?        // "Men" | "Women" | "Unisex" | "Kids"
+  sizeCategory    String?        // "Narrow" | "Medium" | "Wide"
+  lensWidth       Int?           // In mm (e.g. 52)
+  bridgeWidth     Int?           // In mm (e.g. 18)
+  templeLength    Int?           // In mm (e.g. 140)
+  
+  // Stock & Flags
+  stockQuantity   Int            @default(10)
+  isFeatured      Boolean        @default(false)
+  isNewArrival    Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  images          ProductImage[]
+  variants        ProductVariant[]
+  orderItems      OrderItem[]
+}
+
+// 2. PRODUCT IMAGES
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  isPrimary Boolean  @default(false)
+  altText   String?
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// 3. PRODUCT COLOR / STYLE VARIANTS
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String
+  colorName  String   // e.g. "Matte Black", "Tortoiseshell", "Pure Hazel"
+  colorHex   String   // e.g. "#1A1A1A", "#8B4513", "#8E7051"
+  stock      Int      @default(5)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// 4. ZERO-POWER LENS ADD-ON OPTIONS
+model LensOption {
+  id          String   @id @default(cuid())
+  name        String   // "Frame Only" | "Zero-Power Blue Cut" | "Zero-Power Anti-Glare" | "Zero-Power Photochromic"
+  price       Float    // PKR 0, 800, 600, 1200
+  badge       String?  // "Most Popular" | "Best for Screens"
+  description String
+}
+
+// 5. CUSTOMER ORDER (100% On-Site Checkout)
+model Order {
+  id              String         @id // e.g. "HO-1001"
+  customerName    String
+  phone           String         // Pakistan 03XX-XXXXXXX format
+  email           String?
+  city            String         // e.g. "Mianwali", "Lahore", "Islamabad"
+  address         String         // Complete street address
+  orderNotes      String?
+  
+  // Financials
+  subtotal        Float
+  shippingFee     Float          // 0 if subtotal >= 3000, else 250
+  discountCode    String?        // e.g. "WELCOME500", "MIANWALI"
+  discountAmount  Float?         @default(0)
+  totalAmount     Float
+  paymentMethod   String         @default("COD") // Cash on Delivery
+  
+  // Tracking & Fulfillment
+  status          String         @default("CONFIRMED") 
+  // Stages: "CONFIRMED" -> "PACKED" -> "SHIPPED" -> "DELIVERED" | "CANCELLED"
+  courierName     String?        // e.g. "TCS", "Leopard", "PostEx"
+  trackingNumber  String?        // Courier tracking number
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+}
+
+// 6. ORDER LINE ITEMS
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  productId     String
+  productName   String
+  brandName     String
+  selectedColor String?  // e.g. "Matte Black"
+  lensOption    String   // "Frame Only" | "Zero-Power Blue Cut" | etc.
+  lensPrice     Float    @default(0)
+  unitPrice     Float    // Base frame price
+  quantity      Int      @default(1)
+  totalPrice    Float    // (unitPrice + lensPrice) * quantity
+
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
+}
+
+// 7. ORDER STATUS AUDIT LOG
+model OrderStatusHistory {
+  id        String   @id @default(cuid())
+  orderId   String
+  status    String   // e.g. "Order Confirmed", "Packed & Label Generated", "Dispatched"
+  note      String?
+  timestamp DateTime @default(now())
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// 8. STORE EYE TEST APPOINTMENTS (Faisal Plaza, Mianwali)
+model EyeTestAppointment {
+  id              String   @id @default(cuid())
+  appointmentRef  String   @unique // e.g. "ETA-801"
+  customerName    String
+  phone           String
+  appointmentDate DateTime
+  timeSlot        String   // e.g. "11:30 AM - 12:00 PM"
+  preferredBranch String   @default("Faisal Plaza, Gulburg Chowk, Mianwali")
+  status          String   @default("PENDING") // "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED"
+  notes           String?
+  createdAt       DateTime @default(now())
+}
