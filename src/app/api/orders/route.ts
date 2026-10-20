@@ -30,34 +30,64 @@ export async function POST(request: Request) {
     const orderCount = await prisma.order.count();
     const orderId = `HO-${1001 + orderCount}`;
 
+    const safeSubtotal = Number(subtotal) || 0;
+    const safeShippingFee = Number(shippingFee) || 0;
+    const safeDiscountAmount = Number(discountAmount) || 0;
+    const safeTotalAmount =
+      Number(totalAmount) || Math.max(0, safeSubtotal + safeShippingFee - safeDiscountAmount);
+
+    // Resolve product IDs if a slug was passed instead of cuid
+    const resolvedItems = await Promise.all(
+      items.map(async (item: any) => {
+        let validProductId = item.productId;
+        const found = await prisma.product.findFirst({
+          where: {
+            OR: [{ id: item.productId }, { slug: item.productId }],
+          },
+          select: { id: true, name: true, brand: true },
+        });
+
+        if (found) {
+          validProductId = found.id;
+        }
+
+        const unitPrice = Number(item.unitPrice) || 0;
+        const lensPrice = Number(item.lensPrice) || 0;
+        const quantity = Number(item.quantity) || 1;
+        const itemTotal = Number(item.totalPrice) || (unitPrice + lensPrice) * quantity;
+
+        return {
+          productId: validProductId,
+          productName: item.productName || found?.name || "Optical Item",
+          brandName: item.brandName || found?.brand || "Hassan Optics",
+          selectedColor: item.selectedColor || null,
+          lensOption: item.lensOption || "Standard",
+          lensPrice,
+          unitPrice,
+          quantity,
+          totalPrice: itemTotal,
+        };
+      })
+    );
+
     const newOrder = await prisma.order.create({
       data: {
         id: orderId,
-        customerName,
-        phone,
-        email: email || null,
-        city: city || "Mianwali",
-        address,
-        orderNotes: orderNotes || null,
-        subtotal: Number(subtotal),
-        shippingFee: Number(shippingFee),
+        customerName: customerName.trim(),
+        phone: phone.trim(),
+        email: email ? email.trim() : null,
+        city: city ? city.trim() : "Mianwali",
+        address: address.trim(),
+        orderNotes: orderNotes ? orderNotes.trim() : null,
+        subtotal: safeSubtotal,
+        shippingFee: safeShippingFee,
         discountCode: discountCode || null,
-        discountAmount: Number(discountAmount) || 0,
-        totalAmount: Number(totalAmount),
+        discountAmount: safeDiscountAmount,
+        totalAmount: safeTotalAmount,
         paymentMethod: "COD",
         status: "CONFIRMED",
         items: {
-          create: items.map((item: any) => ({
-            productId: item.productId,
-            productName: item.productName,
-            brandName: item.brandName,
-            selectedColor: item.selectedColor || null,
-            lensOption: item.lensOption,
-            lensPrice: Number(item.lensPrice) || 0,
-            unitPrice: Number(item.unitPrice),
-            quantity: Number(item.quantity) || 1,
-            totalPrice: Number(item.totalPrice),
-          })),
+          create: resolvedItems,
         },
         statusHistory: {
           create: [
