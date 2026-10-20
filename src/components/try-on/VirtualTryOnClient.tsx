@@ -16,6 +16,7 @@ import {
   Camera,
   RotateCcw,
   ZoomIn,
+  ZoomOut,
   Download,
   Sparkles,
   ShoppingBag,
@@ -34,6 +35,11 @@ import {
   Sliders,
   CheckCircle2,
   Info,
+  Maximize2,
+  ArrowUp,
+  ArrowDown,
+  Plus,
+  Minus,
 } from "lucide-react";
 
 interface TryOnProduct {
@@ -75,7 +81,7 @@ const SAMPLE_MODELS: SampleModel[] = [
     url: "/images/models/male-1.jpg",
     defaultX: 50.0,
     defaultY: 38.0,
-    defaultScale: 95,
+    defaultScale: 85,
     defaultRotation: 0,
     faceShape: "Oval",
     pd: 64,
@@ -87,7 +93,7 @@ const SAMPLE_MODELS: SampleModel[] = [
     url: "/images/models/female-1.jpg",
     defaultX: 49.5,
     defaultY: 37.0,
-    defaultScale: 92,
+    defaultScale: 82,
     defaultRotation: -1.2,
     faceShape: "Heart",
     pd: 61,
@@ -99,7 +105,7 @@ const SAMPLE_MODELS: SampleModel[] = [
     url: "/images/models/male-2.jpg",
     defaultX: 50.5,
     defaultY: 39.0,
-    defaultScale: 98,
+    defaultScale: 88,
     defaultRotation: 0.8,
     faceShape: "Square",
     pd: 65,
@@ -111,7 +117,7 @@ const SAMPLE_MODELS: SampleModel[] = [
     url: "/images/models/female-2.jpg",
     defaultX: 50.0,
     defaultY: 36.5,
-    defaultScale: 90,
+    defaultScale: 80,
     defaultRotation: -0.5,
     faceShape: "Oval",
     pd: 60,
@@ -138,12 +144,16 @@ export default function VirtualTryOnClient({
   const [isLiveCamera, setIsLiveCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
+  // Face Zoom & Pan (for distant or half-body photos)
+  const [faceZoom, setFaceZoom] = useState(1.0);
+  const [facePanY, setFacePanY] = useState(0);
+
   // AI Auto-Fit & Detection state
   const [isScanning, setIsScanning] = useState(false);
   const [detectionResult, setDetectionResult] = useState<FaceDetectionResult | null>(null);
   const [autoFitSuccess, setAutoFitSuccess] = useState(true);
 
-  // Eyewear position & transform (auto-calculated by AI)
+  // Eyewear position & transform
   const [posX, setPosX] = useState(SAMPLE_MODELS[0].defaultX);
   const [posY, setPosY] = useState(SAMPLE_MODELS[0].defaultY);
   const [scale, setScale] = useState(SAMPLE_MODELS[0].defaultScale);
@@ -152,9 +162,8 @@ export default function VirtualTryOnClient({
   // Controls UI state
   const [showGlasses, setShowGlasses] = useState(true);
   const [showFineTune, setShowFineTune] = useState(false);
-  const [showLandmarkPoints, setShowLandmarkPoints] = useState(false);
 
-  // Manual drag states (kept as optional fine-tuning)
+  // Manual drag states
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, startPosX: 50, startPosY: 38 });
 
@@ -165,11 +174,10 @@ export default function VirtualTryOnClient({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraLoopId = useRef<number | null>(null);
 
-  // Trigger AI Auto-Fit on an image
+  // Run AI Auto-Fit
   const triggerAutoFit = useCallback(
-    async (imageUrl: string, fallbackPreset?: SampleModel) => {
+    async (imageUrl: string, fallbackPreset?: SampleModel, zoomLevel = 1.0, panY = 0) => {
       setIsScanning(true);
-      setAutoFitSuccess(false);
 
       const img = new window.Image();
       img.crossOrigin = "anonymous";
@@ -185,7 +193,9 @@ export default function VirtualTryOnClient({
               rect.width,
               rect.height,
               img.naturalWidth || 800,
-              img.naturalHeight || 1000
+              img.naturalHeight || 1000,
+              zoomLevel,
+              panY
             );
 
             setPosX(transform.posX);
@@ -195,31 +205,16 @@ export default function VirtualTryOnClient({
             setDetectionResult(result);
             setAutoFitSuccess(true);
           } else if (fallbackPreset) {
-            // Apply calibrated sample preset
             setPosX(fallbackPreset.defaultX);
             setPosY(fallbackPreset.defaultY);
             setScale(fallbackPreset.defaultScale);
             setRotation(fallbackPreset.defaultRotation);
-            setDetectionResult({
-              landmarks: [],
-              leftEye: { x: 0.45, y: 0.38 },
-              rightEye: { x: 0.55, y: 0.38 },
-              noseBridge: { x: 0.5, y: 0.38 },
-              leftTemple: { x: 0.35, y: 0.38 },
-              rightTemple: { x: 0.65, y: 0.38 },
-              chin: { x: 0.5, y: 0.7 },
-              forehead: { x: 0.5, y: 0.15 },
-              pupillaryDistanceMm: fallbackPreset.pd,
-              faceShape: fallbackPreset.faceShape,
-              faceShapeRecommendation: fallbackPreset.recommendation,
-              confidence: 0.95,
-            });
             setAutoFitSuccess(true);
           } else {
-            // Default center fit
+            // Intelligent centered default
             setPosX(50);
             setPosY(38);
-            setScale(100);
+            setScale(50);
             setRotation(0);
             setAutoFitSuccess(false);
           }
@@ -251,7 +246,7 @@ export default function VirtualTryOnClient({
     []
   );
 
-  // Auto-fit on initial mount
+  // Initial mount auto-fit
   useEffect(() => {
     triggerAutoFit(SAMPLE_MODELS[0].url, SAMPLE_MODELS[0]);
   }, [triggerAutoFit]);
@@ -264,30 +259,7 @@ export default function VirtualTryOnClient({
     }
   }, [initialSlug, products]);
 
-  // Recalculate on window resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (detectionResult && stageRef.current) {
-        const rect = stageRef.current.getBoundingClientRect();
-        const transform = calculateEyewearTransform(
-          detectionResult,
-          rect.width,
-          rect.height,
-          800,
-          1000
-        );
-        setPosX(transform.posX);
-        setPosY(transform.posY);
-        setScale(transform.scale);
-        setRotation(transform.rotation);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [detectionResult]);
-
-  // Handle User Photo Upload
+  // Handle Photo Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -298,25 +270,63 @@ export default function VirtualTryOnClient({
           const dataUrl = event.target.result as string;
           setFaceImage(dataUrl);
           setIsCustomPhoto(true);
-          triggerAutoFit(dataUrl);
+          setFaceZoom(1.0);
+          setFacePanY(0);
+          triggerAutoFit(dataUrl, undefined, 1.0, 0);
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle Model Selection
+  // Handle Sample Model Selection
   const handleSelectModel = (model: SampleModel) => {
     stopLiveCamera();
     setActiveModel(model);
     setFaceImage(model.url);
     setIsCustomPhoto(false);
-    // Instant snap to pre-calibrated landmark
+    setFaceZoom(1.0);
+    setFacePanY(0);
     setPosX(model.defaultX);
     setPosY(model.defaultY);
     setScale(model.defaultScale);
     setRotation(model.defaultRotation);
-    triggerAutoFit(model.url, model);
+    triggerAutoFit(model.url, model, 1.0, 0);
+  };
+
+  // Toggle Smart Face Zoom (Close-Up Mirror view)
+  const toggleFaceZoom = () => {
+    const newZoom = faceZoom > 1.2 ? 1.0 : 1.8;
+    setFaceZoom(newZoom);
+    // When zooming in, center slightly towards upper half where head typically is
+    const newPan = newZoom > 1.0 ? 30 : 0;
+    setFacePanY(newPan);
+
+    if (detectionResult && stageRef.current) {
+      const rect = stageRef.current.getBoundingClientRect();
+      const transform = calculateEyewearTransform(
+        detectionResult,
+        rect.width,
+        rect.height,
+        800,
+        1000,
+        newZoom,
+        newPan
+      );
+      setPosX(transform.posX);
+      setPosY(transform.posY);
+      setScale(transform.scale);
+      setRotation(transform.rotation);
+    }
+  };
+
+  // Quick Nudge Buttons
+  const nudgeY = (delta: number) => {
+    setPosY((prev) => Math.min(85, Math.max(15, prev + delta)));
+  };
+
+  const nudgeScale = (delta: number) => {
+    setScale((prev) => Math.min(180, Math.max(20, prev + delta)));
   };
 
   // Start Live AR Camera
@@ -347,7 +357,7 @@ export default function VirtualTryOnClient({
     } catch (err: any) {
       console.error("Camera access error:", err);
       setCameraError(
-        "Camera permission denied. Please allow camera access in your browser settings or upload a selfie."
+        "Camera permission denied. Please allow camera access in your browser settings or upload a selfie photo."
       );
       setIsLiveCamera(false);
     }
@@ -375,7 +385,6 @@ export default function VirtualTryOnClient({
 
     const loop = async () => {
       const now = performance.now();
-      // Track at ~15 fps to preserve battery & high smoothness
       if (now - lastDetectionTime > 66) {
         lastDetectionTime = now;
         if (
@@ -402,11 +411,10 @@ export default function VirtualTryOnClient({
               setAutoFitSuccess(true);
             }
           } catch (e) {
-            // keep running
+            // keep looping
           }
         }
       }
-
       cameraLoopId.current = requestAnimationFrame(loop);
     };
 
@@ -431,16 +439,15 @@ export default function VirtualTryOnClient({
     triggerAutoFit(dataUrl);
   };
 
-  // Cleanup camera stream on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopLiveCamera();
     };
   }, []);
 
-  // Optional manual drag handlers (if fine-tuning is enabled)
+  // Dragging logic
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!showFineTune) return;
     e.preventDefault();
     setIsDragging(true);
     setDragStart({
@@ -463,18 +470,6 @@ export default function VirtualTryOnClient({
 
   const handlePointerUp = () => {
     setIsDragging(false);
-  };
-
-  // Reset to auto-detected position
-  const handleResetToAuto = () => {
-    if (isCustomPhoto) {
-      triggerAutoFit(faceImage);
-    } else {
-      setPosX(activeModel.defaultX);
-      setPosY(activeModel.defaultY);
-      setScale(activeModel.defaultScale);
-      setRotation(activeModel.defaultRotation);
-    }
   };
 
   // Add to cart
@@ -500,7 +495,7 @@ export default function VirtualTryOnClient({
     }
   };
 
-  // Download high-res photo with Hassan Optics watermark
+  // Download combined image
   const handleDownload = () => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -517,7 +512,6 @@ export default function VirtualTryOnClient({
       canvas.width = faceImg.naturalWidth || 800;
       canvas.height = faceImg.naturalHeight || 1000;
 
-      // Draw Face
       ctx.drawImage(faceImg, 0, 0, canvas.width, canvas.height);
 
       if (showGlasses) {
@@ -534,9 +528,8 @@ export default function VirtualTryOnClient({
           ctx.translate(centerX, centerY);
           ctx.rotate((rotation * Math.PI) / 180);
 
-          // Frame dimensions
           const frameWidth = (canvas.width * 0.60 * scale) / 100;
-          const frameHeight = frameWidth * (220 / 600); // 600x220 aspect
+          const frameHeight = frameWidth * (220 / 600);
 
           ctx.drawImage(
             frameImg,
@@ -547,8 +540,8 @@ export default function VirtualTryOnClient({
           );
           ctx.restore();
 
-          // Brand Watermark Footer
-          ctx.fillStyle = "rgba(27, 42, 74, 0.92)";
+          // Brand Watermark
+          ctx.fillStyle = "rgba(27, 42, 74, 0.94)";
           ctx.fillRect(0, canvas.height - 52, canvas.width, 52);
           ctx.fillStyle = "#FFFFFF";
           ctx.font = "bold 15px -apple-system, BlinkMacSystemFont, sans-serif";
@@ -558,7 +551,6 @@ export default function VirtualTryOnClient({
             canvas.height - 20
           );
 
-          // Trigger Download
           const a = document.createElement("a");
           a.download = `Hassan-Optics-${selectedProduct.slug}-TryOn.png`;
           a.href = canvas.toDataURL("image/png");
@@ -576,31 +568,31 @@ export default function VirtualTryOnClient({
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-            <ScanFace className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-            <span>AI Face Detection & Auto-Fit Engine</span>
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>AI Virtual Mirror • Hassan Optics</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-[#1B2A4A] tracking-tight">
-            Virtual Eyewear Try-On • Hassan Optics
+            Virtual Eyewear Try-On
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm mt-1.5 leading-relaxed">
-            Upload your selfie or use live camera. Our AI automatically locates your eyes and snaps frames directly onto your face with zero manual dragging needed.
+            Upload any selfie or choose a face. Real high-definition eyewear frames fit your eyes with instant 1-click swapping.
           </p>
         </div>
 
-        {/* Main Grid: Try-On Stage & Side Panel */}
+        {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-          {/* Left Column: Try-On Canvas */}
+          {/* Left: Try-On Canvas Stage */}
           <div className="lg:col-span-7 flex flex-col items-center">
             <div className="w-full max-w-lg bg-white rounded-3xl p-3 sm:p-5 border border-slate-200 shadow-md">
               {/* Canvas Viewport */}
               <div
                 ref={stageRef}
-                onPointerMove={showFineTune ? handlePointerMove : undefined}
-                onPointerUp={showFineTune ? handlePointerUp : undefined}
-                onPointerLeave={showFineTune ? handlePointerUp : undefined}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
                 className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-slate-900 shadow-inner select-none touch-none border border-slate-200"
               >
-                {/* Mode 1: Live AR Webcam Stream */}
+                {/* Live Webcam Video OR Photo */}
                 {isLiveCamera ? (
                   <video
                     ref={videoRef}
@@ -610,33 +602,42 @@ export default function VirtualTryOnClient({
                     className="w-full h-full object-cover object-center -scale-x-100"
                   />
                 ) : (
-                  /* Mode 2: Photo Face (Sample or Uploaded) */
-                  <Image
-                    src={faceImage}
-                    alt="Face Model"
-                    fill
-                    priority
-                    unoptimized={faceImage.startsWith("data:")}
-                    className="object-cover object-center pointer-events-none"
-                  />
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      transform: `scale(${faceZoom}) translateY(${facePanY}px)`,
+                      transformOrigin: "center center",
+                      transition: "transform 0.3s ease-out",
+                    }}
+                  >
+                    <Image
+                      src={faceImage}
+                      alt="Face Model"
+                      fill
+                      priority
+                      unoptimized={faceImage.startsWith("data:")}
+                      className="object-cover object-center pointer-events-none"
+                    />
+                  </div>
                 )}
 
-                {/* Laser Scanning Animation when AI is processing */}
+                {/* Laser Scanning Line during detection */}
                 {isScanning && (
-                  <div className="absolute inset-0 pointer-events-none z-30 flex flex-col justify-center items-center bg-black/35 backdrop-blur-[2px] transition-all">
-                    {/* Glowing Laser Line */}
+                  <div className="absolute inset-0 pointer-events-none z-30 flex flex-col justify-center items-center bg-black/30 backdrop-blur-[1px] transition-all">
                     <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#F15A24] to-transparent shadow-[0_0_20px_#F15A24] animate-pulse" />
                     <div className="mt-4 px-4 py-2 rounded-xl bg-slate-950/90 border border-orange-500/40 text-white text-xs font-bold flex items-center gap-2 shadow-2xl">
                       <ScanFace className="w-4 h-4 text-[#F15A24] animate-spin" />
-                      <span>AI Detecting Face & Aligning Eyewear...</span>
+                      <span>Aligning Eyewear on Eyes...</span>
                     </div>
                   </div>
                 )}
 
-                {/* Overlaid Eyewear Frame (Auto-positioned by AI) */}
+                {/* Overlaid Realistic Eyewear Frame */}
                 {showGlasses && (
                   <div
-                    onPointerDown={showFineTune ? handlePointerDown : undefined}
+                    onPointerDown={handlePointerDown}
                     style={{
                       position: "absolute",
                       left: `${posX}%`,
@@ -644,11 +645,12 @@ export default function VirtualTryOnClient({
                       width: `${60 * (scale / 100)}%`,
                       transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
                       transformOrigin: "center center",
-                      transition: isDragging || isLiveCamera ? "none" : "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                      transition: isDragging || isLiveCamera ? "none" : "all 0.15s ease-out",
                     }}
-                    className={`z-20 ${showFineTune ? "cursor-move" : "pointer-events-none"}`}
+                    className="z-20 cursor-move"
                   >
-                    <div className="relative aspect-[600/220] w-full drop-shadow-2xl filter">
+                    {/* Realistic Frame with Soft Physical Shadow */}
+                    <div className="relative aspect-[800/320] w-full filter drop-shadow-[0_10px_14px_rgba(0,0,0,0.40)]">
                       <Image
                         src={selectedProduct.frameOverlay}
                         alt={selectedProduct.name}
@@ -659,23 +661,28 @@ export default function VirtualTryOnClient({
                   </div>
                 )}
 
-                {/* Top Status Badges */}
-                <div className="absolute top-3 left-3 z-30 flex flex-col gap-1.5">
+                {/* Top Left: Status & Zoom Toggles */}
+                <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
                   {autoFitSuccess && !isScanning && (
-                    <span className="px-2.5 py-1 rounded-lg bg-emerald-600/90 backdrop-blur-md text-white text-[11px] font-bold border border-emerald-400/30 flex items-center gap-1.5 shadow-md">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
-                      <span>AI Auto-Fitted (100% Alignment)</span>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-600/95 backdrop-blur-md text-white text-[10px] font-bold border border-emerald-400/30 flex items-center gap-1 shadow-md">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-200" />
+                      <span>Auto-Fitted</span>
                     </span>
                   )}
-                  {isLiveCamera && (
-                    <span className="px-2 py-0.5 rounded-md bg-red-600/90 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 animate-pulse">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                      Live AR Mirror
-                    </span>
+                  {isCustomPhoto && !isLiveCamera && (
+                    <button
+                      type="button"
+                      onClick={toggleFaceZoom}
+                      className="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 text-white text-[10px] font-bold border border-white/20 flex items-center gap-1 backdrop-blur-md transition-all active:scale-95"
+                      title="Zoom into face"
+                    >
+                      <Maximize2 className="w-3 h-3 text-orange-400" />
+                      <span>{faceZoom > 1.2 ? "Full View" : "Zoom Face"}</span>
+                    </button>
                   )}
                 </div>
 
-                {/* Top Right Action: Toggle Frame Visibility */}
+                {/* Top Right: Toggle Frame Visibility */}
                 <div className="absolute top-3 right-3 z-30">
                   <button
                     type="button"
@@ -697,7 +704,7 @@ export default function VirtualTryOnClient({
                   </button>
                 </div>
 
-                {/* Live Camera Snap Controls Overlay */}
+                {/* Live Camera Snap Bar */}
                 {isLiveCamera && (
                   <div className="absolute bottom-16 inset-x-0 z-30 flex items-center justify-center gap-3">
                     <button
@@ -706,19 +713,19 @@ export default function VirtualTryOnClient({
                       className="px-4 py-2 bg-[#F15A24] hover:bg-[#d84817] text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-2 active:scale-95 border-2 border-white"
                     >
                       <Camera className="w-4 h-4" />
-                      <span>Freeze / Snap Photo</span>
+                      <span>Snap Photo</span>
                     </button>
                     <button
                       type="button"
                       onClick={stopLiveCamera}
                       className="px-3 py-2 bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold rounded-full backdrop-blur-md active:scale-95 border border-white/20"
                     >
-                      Close Camera
+                      Close
                     </button>
                   </div>
                 )}
 
-                {/* Active Frame Pill at Bottom */}
+                {/* Frame Details Pill at Bottom */}
                 <div className="absolute bottom-3 left-3 right-3 z-30 bg-white/95 backdrop-blur-md rounded-xl p-2.5 shadow-lg border border-slate-100 flex items-center justify-between">
                   <div className="min-w-0 pr-2">
                     <div className="text-[10px] font-bold text-[#F15A24] uppercase tracking-wider">
@@ -736,144 +743,107 @@ export default function VirtualTryOnClient({
                 </div>
               </div>
 
-              {/* AI Face Shape Analysis & Quick Insights */}
-              {detectionResult && (
-                <div className="mt-3 p-3 bg-gradient-to-r from-orange-50/60 to-blue-50/60 rounded-2xl border border-orange-100/80 flex items-start gap-2.5">
-                  <div className="p-1.5 rounded-lg bg-[#F15A24]/10 text-[#F15A24] shrink-0 mt-0.5">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div className="text-xs text-slate-700 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-extrabold text-[#1B2A4A]">
-                        Face Shape: {detectionResult.faceShape}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                        PD: ~{detectionResult.pupillaryDistanceMm}mm
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
-                      {detectionResult.faceShapeRecommendation}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Optional Fine-Tuning Drawer (Collapsed by Default since AI auto-fits) */}
-              <div className="mt-3 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowFineTune(!showFineTune)}
-                  className="w-full flex items-center justify-between text-xs font-semibold text-slate-600 hover:text-slate-900 py-1"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-[#F15A24]" />
-                    <span>Fine-tune Fit Manually (Optional)</span>
-                  </span>
-                  {showFineTune ? (
-                    <ChevronUp className="w-4 h-4 text-slate-400" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  )}
-                </button>
-
-                {showFineTune && (
-                  <div className="mt-3 space-y-3 pt-2 border-t border-slate-100 bg-slate-50 p-3 rounded-xl text-xs">
-                    <div className="text-[11px] text-slate-500 mb-1">
-                      💡 Frame was auto-aligned by AI. You can drag the frame or nudge size/tilt below if you prefer a looser or tighter fit.
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="flex items-center justify-between text-slate-600 font-semibold mb-1">
-                          <span className="flex items-center gap-1">
-                            <ZoomIn className="w-3 h-3 text-[#F15A24]" /> Size Scale
-                          </span>
-                          <span className="text-[11px] font-bold text-slate-900">{scale}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="70"
-                          max="130"
-                          value={scale}
-                          onChange={(e) => setScale(Number(e.target.value))}
-                          className="w-full accent-[#F15A24] h-1.5 bg-slate-200 rounded-lg cursor-pointer"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex items-center justify-between text-slate-600 font-semibold mb-1">
-                          <span className="flex items-center gap-1">
-                            <RotateCw className="w-3 h-3 text-[#F15A24]" /> Tilt Angle
-                          </span>
-                          <span className="text-[11px] font-bold text-slate-900">{rotation}°</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="-20"
-                          max="20"
-                          value={rotation}
-                          onChange={(e) => setRotation(Number(e.target.value))}
-                          className="w-full accent-[#F15A24] h-1.5 bg-slate-200 rounded-lg cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-1">
-                      <button
-                        type="button"
-                        onClick={handleResetToAuto}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#F15A24] hover:underline"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                        <span>Re-snap to AI Center</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottom Action Bar: Save Photo & WhatsApp */}
-                <div className="flex items-center justify-between pt-3 gap-2">
+              {/* 1-Tap Quick Adjust Nudge Bar (Right under Mirror) */}
+              <div className="mt-3 p-2 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-1.5 text-xs">
+                {/* Size Adjusters */}
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase mr-1">Size:</span>
                   <button
                     type="button"
-                    onClick={handleDownload}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors"
-                    title="Download picture wearing glasses"
+                    onClick={() => nudgeScale(-6)}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    title="Make glasses smaller"
                   >
-                    <Download className="w-3.5 h-3.5 text-[#F15A24]" />
-                    <span>Download Photo</span>
+                    <Minus className="w-3.5 h-3.5" />
                   </button>
-
-                  <a
-                    href={`https://wa.me/923110073721?text=${encodeURIComponent(
-                      `Assalam-o-Alaikum Hassan Optics, I tried on the ${selectedProduct.brand} ${selectedProduct.name} in your Virtual Mirror and want advice on lens prescription.`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200"
+                  <span className="text-[11px] font-extrabold text-slate-800 w-9 text-center">
+                    {scale}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => nudgeScale(6)}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    title="Make glasses bigger"
                   >
-                    <span>💬 WhatsApp Optometrist</span>
-                  </a>
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+
+                {/* Position Up/Down */}
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase mr-1">Position:</span>
+                  <button
+                    type="button"
+                    onClick={() => nudgeY(-2)}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    title="Move up"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => nudgeY(2)}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    title="Move down"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isCustomPhoto) triggerAutoFit(faceImage, undefined, faceZoom, facePanY);
+                      else handleSelectModel(activeModel);
+                    }}
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#F15A24] font-bold border border-slate-200 active:scale-90 ml-1"
+                    title="Re-center frame"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Actions: Save Photo & WhatsApp */}
+              <div className="flex items-center justify-between pt-3 gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors"
+                  title="Download photo with frame"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#F15A24]" />
+                  <span>Download Photo</span>
+                </button>
+
+                <a
+                  href={`https://wa.me/923110073721?text=${encodeURIComponent(
+                    `Assalam-o-Alaikum Hassan Optics, I tried on the ${selectedProduct.brand} ${selectedProduct.name} in your Virtual Mirror and want advice on prescription.`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors border border-emerald-200"
+                >
+                  <span>💬 WhatsApp Optometrist</span>
+                </a>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Face Selection & Purchase Details */}
+          {/* Right: Step 1 Face Source & Step 2 Buy Card */}
           <div className="lg:col-span-5 space-y-6">
-            {/* Step 1: Face Selector */}
+            {/* Step 1: Face Source */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-3.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <ScanFace className="w-4 h-4 text-[#F15A24]" />
+                  <Camera className="w-4 h-4 text-[#F15A24]" />
                   <span>Step 1: Your Face Source</span>
                 </h3>
                 {isCustomPhoto && (
                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                    Your Photo Auto-Fitted
+                    Your Photo Active
                   </span>
                 )}
               </div>
 
-              {/* Camera Error Alert */}
               {cameraError && (
                 <div className="p-2.5 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 flex items-start gap-2">
                   <Info className="w-4 h-4 shrink-0 mt-0.5" />
@@ -922,10 +892,10 @@ export default function VirtualTryOnClient({
                 </button>
               </div>
 
-              {/* Sample Models Selection */}
+              {/* Sample Faces */}
               <div>
                 <span className="text-[11px] text-slate-500 font-medium block mb-2">
-                  Or pick a pre-calibrated sample face:
+                  Or pick a sample face model:
                 </span>
                 <div className="grid grid-cols-4 gap-2">
                   {SAMPLE_MODELS.map((m) => {
@@ -952,7 +922,7 @@ export default function VirtualTryOnClient({
               </div>
             </div>
 
-            {/* Step 2: Product & Purchase Card */}
+            {/* Step 2: Selected Product & Buy */}
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
@@ -975,7 +945,6 @@ export default function VirtualTryOnClient({
                 </div>
               </div>
 
-              {/* Guarantee Banner */}
               <div className="bg-slate-50 rounded-xl p-3 text-[11px] text-slate-600 space-y-1.5 border border-slate-100">
                 <div className="flex items-center gap-1.5 text-slate-900 font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
@@ -984,7 +953,6 @@ export default function VirtualTryOnClient({
                 <div>100% Cash on Delivery across Pakistan. Ready to wear.</div>
               </div>
 
-              {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
                 <button
                   type="button"
@@ -1010,7 +978,7 @@ export default function VirtualTryOnClient({
                   href={`/product/${selectedProduct.slug}`}
                   className="text-xs text-slate-500 hover:text-[#F15A24] font-semibold underline underline-offset-2"
                 >
-                  View full specifications & lens prescription options →
+                  View full specifications & lens options →
                 </Link>
               </div>
             </div>
@@ -1051,12 +1019,12 @@ export default function VirtualTryOnClient({
                       : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
-                  <div className="relative aspect-[600/220] w-full mb-2 bg-slate-50 rounded-lg p-1 overflow-hidden border border-slate-100">
+                  <div className="relative aspect-[800/320] w-full mb-2 bg-slate-50 rounded-lg p-1.5 overflow-hidden border border-slate-100 flex items-center justify-center">
                     <Image
                       src={p.frameOverlay}
                       alt={p.name}
                       fill
-                      className="object-contain"
+                      className="object-contain p-1"
                     />
                   </div>
 

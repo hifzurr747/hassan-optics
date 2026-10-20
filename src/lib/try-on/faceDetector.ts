@@ -24,8 +24,8 @@ export interface FaceDetectionResult {
 export interface EyewearTransform {
   posX: number; // percentage in container (0-100)
   posY: number; // percentage in container (0-100)
-  scale: number; // percentage (typically 75 - 130)
-  rotation: number; // degrees (-30 to +30)
+  scale: number; // percentage (typically 20 - 150)
+  rotation: number; // degrees (-35 to +35)
 }
 
 // MediaPipe FaceMesh instance cache
@@ -47,7 +47,6 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
   }
 
   scriptLoadingPromise = new Promise((resolve, reject) => {
-    // Check if script element already exists
     const existing = document.querySelector('script[src*="face_mesh.js"]');
     if (existing) {
       existing.addEventListener("load", () => resolve((window as any).FaceMesh));
@@ -65,7 +64,7 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
     };
 
     script.onerror = (err) => {
-      console.warn("Failed to load MediaPipe from CDN, fallback mode will be active:", err);
+      console.warn("Failed to load MediaPipe from CDN:", err);
       reject(err);
     };
 
@@ -93,8 +92,8 @@ export async function getFaceMeshInstance(): Promise<any> {
   faceMeshInstance.setOptions({
     maxNumFaces: 1,
     refineLandmarks: true,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5,
+    minDetectionConfidence: 0.4,
+    minTrackingConfidence: 0.4,
   });
 
   return faceMeshInstance;
@@ -162,7 +161,6 @@ export async function detectFaceLandmarks(
     return new Promise((resolve) => {
       let isResolved = false;
 
-      // Timeout fallback in case MediaPipe takes too long
       const timer = setTimeout(() => {
         if (!isResolved) {
           isResolved = true;
@@ -182,10 +180,6 @@ export async function detectFaceLandmarks(
 
         const lm = results.multiFaceLandmarks[0];
 
-        // Key landmarks:
-        // Left eye: 33 (outer), 133 (inner)
-        // Right eye: 362 (inner), 263 (outer)
-        // Iris centers: 468 (left pupil), 473 (right pupil) if refined, else midpoints
         const leftEyeOuter = lm[33];
         const leftEyeInner = lm[133];
         const rightEyeInner = lm[362];
@@ -203,7 +197,7 @@ export async function detectFaceLandmarks(
           z: (rightEyeOuter.z + rightEyeInner.z) / 2,
         };
 
-        // Nose bridge (point 168 is right between eyes)
+        // Landmark 168 is top of nose bridge between pupils
         const noseBridge = lm[168] || lm[6] || {
           x: (leftEye.x + rightEye.x) / 2,
           y: (leftEye.y + rightEye.y) / 2,
@@ -217,7 +211,6 @@ export async function detectFaceLandmarks(
         const leftJaw = lm[172] || lm[58];
         const rightJaw = lm[397] || lm[288];
 
-        // Pupillary Distance estimation (standard human PD is ~63mm)
         const eyeDistanceNorm = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
         const estimatedPd = Math.round(60 + eyeDistanceNorm * 15);
 
@@ -263,30 +256,33 @@ export async function detectFaceLandmarks(
 
 /**
  * Converts detected face landmarks into exact CSS percentages for frame position,
- * scale, and rotation, compensating for object-cover image rendering.
+ * scale, and rotation, compensating for object-cover image rendering and zoom.
  */
 export function calculateEyewearTransform(
   detection: FaceDetectionResult,
   containerWidth: number,
   containerHeight: number,
   imageNaturalWidth: number,
-  imageNaturalHeight: number
+  imageNaturalHeight: number,
+  imageZoom: number = 1.0,
+  panOffsetY: number = 0
 ): EyewearTransform {
   if (!containerWidth || !containerHeight || !imageNaturalWidth || !imageNaturalHeight) {
     return { posX: 50, posY: 38, scale: 100, rotation: 0 };
   }
 
-  // Calculate object-cover scaling and cropping offsets
-  const scaleRatio = Math.max(
+  // Calculate object-cover base scaling
+  const baseScale = Math.max(
     containerWidth / imageNaturalWidth,
     containerHeight / imageNaturalHeight
   );
 
-  const renderedWidth = imageNaturalWidth * scaleRatio;
-  const renderedHeight = imageNaturalHeight * scaleRatio;
+  const effectiveScale = baseScale * imageZoom;
+  const renderedWidth = imageNaturalWidth * effectiveScale;
+  const renderedHeight = imageNaturalHeight * effectiveScale;
 
   const offsetX = (renderedWidth - containerWidth) / 2;
-  const offsetY = (renderedHeight - containerHeight) / 2;
+  const offsetY = (renderedHeight - containerHeight) / 2 - panOffsetY;
 
   // Convert normalized landmark (0-1) to pixel in viewport container
   const toContainerPixelX = (normX: number) => normX * renderedWidth - offsetX;
@@ -298,8 +294,8 @@ export function calculateEyewearTransform(
 
   // Convert to container percentage (0-100)
   const posX = (bridgePxX / containerWidth) * 100;
-  // Offset slightly (-0.8%) so the bridge bar of the glasses sits naturally over the nose bridge
-  const posY = (bridgePxY / containerHeight) * 100 - 0.8;
+  // Sit comfortably across pupils & bridge
+  const posY = (bridgePxY / containerHeight) * 100 - 0.5;
 
   // Face tilt angle (rotation) based on pupils
   const leftEyePxX = toContainerPixelX(detection.leftEye.x);
@@ -311,33 +307,25 @@ export function calculateEyewearTransform(
   const deltaY = rightEyePxY - leftEyePxY;
   const rotation = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
 
-  // Eyewear scale based on temple width (ear to ear cheekbone span)
-  const leftTemplePxX = toContainerPixelX(detection.leftTemple.x);
-  const leftTemplePxY = toContainerPixelY(detection.leftTemple.y);
-  const rightTemplePxX = toContainerPixelX(detection.rightTemple.x);
-  const rightTemplePxY = toContainerPixelY(detection.rightTemple.y);
+  // Pupillary Distance in container pixels:
+  const pupilDistPx = Math.hypot(deltaX, deltaY);
 
-  const faceWidthPx = Math.hypot(
-    rightTemplePxX - leftTemplePxX,
-    rightTemplePxY - leftTemplePxY
-  );
+  // Anatomical Eyewear Frame Width = Pupillary Distance * 2.20
+  // Standard adult human PD is 63mm, frame width is 138mm (138 / 63 = 2.19)
+  const targetFrameWidthPx = pupilDistPx * 2.22;
+  const targetFrameWidthPct = (targetFrameWidthPx / containerWidth) * 100;
 
-  const faceWidthPct = (faceWidthPx / containerWidth) * 100;
-
-  // Modern frames are roughly 1.02 to 1.05x the temple span
-  const targetFrameWidthPct = faceWidthPct * 1.03;
-
-  // In our CSS: frame width = 60 * (scale / 100) %
-  // Therefore: scale = (targetFrameWidthPct / 60) * 100
+  // Since frame CSS width = `60 * (scale / 100)`%:
+  // scale = (targetFrameWidthPct / 60) * 100
   let calculatedScale = Math.round((targetFrameWidthPct / 60) * 100);
 
-  // Clamp scale within realistic boundary
-  calculatedScale = Math.min(140, Math.max(70, calculatedScale));
+  // Realistic boundary: from 20% (distant body shot) up to 180% (close up face)
+  calculatedScale = Math.min(180, Math.max(20, calculatedScale));
 
   return {
-    posX: Math.min(85, Math.max(15, posX)),
-    posY: Math.min(85, Math.max(15, posY)),
+    posX: Math.min(95, Math.max(5, posX)),
+    posY: Math.min(95, Math.max(5, posY)),
     scale: calculatedScale,
-    rotation: Math.min(30, Math.max(-30, Math.round(rotation * 10) / 10)),
+    rotation: Math.min(35, Math.max(-35, Math.round(rotation * 10) / 10)),
   };
 }

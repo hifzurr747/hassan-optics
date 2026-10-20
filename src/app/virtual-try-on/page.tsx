@@ -12,14 +12,14 @@ export const metadata: Metadata = {
 };
 
 const SHAPE_FRAME_MAP: Record<string, string> = {
-  "ray-ban-aviator-polarized-classic": "/images/frames/aviator.svg",
-  "dior-montaigne-acetate-frame": "/images/frames/rectangle.svg",
-  "ray-ban-clubmaster-browline": "/images/frames/browline.svg",
-  "bvlgari-serpenti-titanium-round": "/images/frames/round.svg",
-  "dior-so-real-cat-eye-sunglasses": "/images/frames/cateye.svg",
-  "hassan-signature-rimless-titanium": "/images/frames/rimless.svg",
-  "givenchy-geometric-tr90-matte": "/images/frames/geometric.svg",
-  "oakley-style-sport-wrap-polar": "/images/frames/sport.svg",
+  "ray-ban-aviator-polarized-classic": "/images/frames/sg_1.png",
+  "dior-montaigne-acetate-frame": "/images/frames/gl_1.png",
+  "ray-ban-clubmaster-browline": "/images/frames/sg_25.png",
+  "bvlgari-serpenti-titanium-round": "/images/frames/gl_63.png",
+  "dior-so-real-cat-eye-sunglasses": "/images/frames/sg_70.png",
+  "hassan-signature-rimless-titanium": "/images/frames/gl_18.png",
+  "givenchy-geometric-tr90-matte": "/images/frames/sg_12.png",
+  "oakley-style-sport-wrap-polar": "/images/frames/sg_63.png",
 };
 
 interface VirtualTryOnPageProps {
@@ -48,11 +48,12 @@ export default async function VirtualTryOnPage({
     // Map overlay by slug or fallback by shape
     let overlay = SHAPE_FRAME_MAP[p.slug];
     if (!overlay) {
-      if (p.shape === "Aviator") overlay = "/images/frames/aviator.svg";
-      else if (p.shape === "Round") overlay = "/images/frames/round.svg";
-      else if (p.shape === "Cat Eye") overlay = "/images/frames/cateye.svg";
-      else if (p.shape === "Geometric") overlay = "/images/frames/geometric.svg";
-      else overlay = "/images/frames/rectangle.svg";
+      if (p.shape === "Aviator") overlay = "/images/frames/sg_1.png";
+      else if (p.shape === "Round") overlay = "/images/frames/gl_63.png";
+      else if (p.shape === "Cat Eye") overlay = "/images/frames/sg_70.png";
+      else if (p.shape === "Geometric") overlay = "/images/frames/sg_12.png";
+      else if (p.category === "eyeglasses") overlay = "/images/frames/gl_1.png";
+      else overlay = "/images/frames/sg_12.png";
     }
 
     return {
