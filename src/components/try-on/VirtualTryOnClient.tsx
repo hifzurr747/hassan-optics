@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/utils";
 import {
   detectFaceLandmarks,
   calculateEyewearTransform,
+  warmupFaceMesh,
   type FaceDetectionResult,
 } from "@/lib/try-on/faceDetector";
 import {
@@ -33,6 +34,8 @@ import {
   ArrowDown,
   Plus,
   Minus,
+  RefreshCw,
+  Sliders,
 } from "lucide-react";
 
 interface TryOnProduct {
@@ -145,6 +148,7 @@ export default function VirtualTryOnClient({
   const [isScanning, setIsScanning] = useState(false);
   const [detectionResult, setDetectionResult] = useState<FaceDetectionResult | null>(null);
   const [autoFitSuccess, setAutoFitSuccess] = useState(true);
+  const [autoFitMessage, setAutoFitMessage] = useState<string | null>(null);
 
   // Eyewear position & transform
   const [posX, setPosX] = useState(SAMPLE_MODELS[0].defaultX);
@@ -166,10 +170,16 @@ export default function VirtualTryOnClient({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraLoopId = useRef<number | null>(null);
 
+  // Warmup FaceMesh on mount
+  useEffect(() => {
+    warmupFaceMesh();
+  }, []);
+
   // Run AI Auto-Fit on photo with Smart Auto-Zoom
   const triggerAutoFit = useCallback(
     async (imageUrl: string, fallbackPreset?: SampleModel) => {
       setIsScanning(true);
+      setAutoFitMessage(null);
 
       const img = new window.Image();
       img.crossOrigin = "anonymous";
@@ -210,6 +220,7 @@ export default function VirtualTryOnClient({
             setRotation(transform.rotation);
             setDetectionResult(result);
             setAutoFitSuccess(true);
+            setAutoFitMessage("AI Auto-Fit Kamiyab! Ankhon aur naak par adjust ho gaya.");
           } else if (fallbackPreset) {
             setFaceZoom(1.0);
             setFacePanY(0);
@@ -226,6 +237,7 @@ export default function VirtualTryOnClient({
             setScale(65);
             setRotation(0);
             setAutoFitSuccess(false);
+            setAutoFitMessage("Chehra thora door hai — center position apply kar di hai.");
           }
         } catch (err) {
           console.warn("AI face detection error:", err);
@@ -360,7 +372,6 @@ export default function VirtualTryOnClient({
       if (!streamRef.current) return;
 
       const now = performance.now();
-      // Track at ~20 fps for high smoothness without overheating device
       if (now - lastTime > 50) {
         lastTime = now;
         if (
@@ -411,7 +422,6 @@ export default function VirtualTryOnClient({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Un-mirror the captured photo for standard portrait
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
@@ -651,7 +661,7 @@ export default function VirtualTryOnClient({
                     <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#F15A24] to-transparent shadow-[0_0_20px_#F15A24] animate-pulse" />
                     <div className="mt-4 px-4 py-2 rounded-xl bg-slate-950/90 border border-orange-500/40 text-white text-xs font-bold flex items-center gap-2 shadow-2xl">
                       <ScanFace className="w-4 h-4 text-[#F15A24] animate-spin" />
-                      <span>AI Face & Eyes Detect Ho Rahay Hain...</span>
+                      <span>AI Chehra aur Ankhain Detect Kar Raha Hai...</span>
                     </div>
                   </div>
                 )}
@@ -682,30 +692,37 @@ export default function VirtualTryOnClient({
                   </div>
                 )}
 
-                {/* Top Left: Badges & Live Camera Indicator */}
-                <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
-                  {isLiveCamera ? (
+                {/* Top Left: Floating AI Auto-Fit & Badges */}
+                <div className="absolute top-3 left-3 z-30 flex items-center gap-1.5 flex-wrap max-w-[85%]">
+                  {/* Dedicated AI Auto-Fit Button right on Mirror */}
+                  {!isLiveCamera && (
+                    <button
+                      type="button"
+                      onClick={() => triggerAutoFit(faceImage)}
+                      disabled={isScanning}
+                      className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-[#F15A24] hover:from-orange-600 hover:to-[#d84817] text-white text-xs font-bold shadow-lg shadow-orange-950/40 flex items-center gap-1.5 active:scale-95 transition-all border border-orange-300/40 cursor-pointer"
+                      title="AI se ankhon aur chehray par auto-fit karein"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                      <span>{isScanning ? "Scanning..." : "⚡ AI Auto-Fit Face"}</span>
+                    </button>
+                  )}
+
+                  {isLiveCamera && (
                     <span className="px-2.5 py-1 rounded-lg bg-red-600/90 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-md animate-pulse">
                       <span className="w-2 h-2 rounded-full bg-white" />
                       Live AR Tracking Active
                     </span>
-                  ) : (
-                    autoFitSuccess && !isScanning && (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-600/95 backdrop-blur-md text-white text-[10px] font-bold border border-emerald-400/30 flex items-center gap-1 shadow-md">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-200" />
-                        <span>AI Auto-Fitted</span>
-                      </span>
-                    )
                   )}
 
                   {isCustomPhoto && !isLiveCamera && (
                     <button
                       type="button"
                       onClick={toggleFaceZoom}
-                      className="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 text-white text-[10px] font-bold border border-white/20 flex items-center gap-1 backdrop-blur-md transition-all active:scale-95"
+                      className="px-2.5 py-1.5 rounded-xl bg-black/75 hover:bg-black text-white text-xs font-bold border border-white/20 flex items-center gap-1 backdrop-blur-md transition-all active:scale-95 cursor-pointer"
                       title="Zoom into face"
                     >
-                      <Maximize2 className="w-3 h-3 text-orange-400" />
+                      <Maximize2 className="w-3.5 h-3.5 text-orange-400" />
                       <span>{faceZoom > 1.2 ? "Full View" : "Zoom Face"}</span>
                     </button>
                   )}
@@ -716,7 +733,7 @@ export default function VirtualTryOnClient({
                   <button
                     type="button"
                     onClick={() => setShowGlasses(!showGlasses)}
-                    className="px-2.5 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-800 text-xs font-bold shadow-md transition-all flex items-center gap-1.5 active:scale-95 border border-slate-200"
+                    className="px-2.5 py-1.5 rounded-xl bg-white/95 hover:bg-white text-slate-800 text-xs font-bold shadow-md transition-all flex items-center gap-1.5 active:scale-95 border border-slate-200 cursor-pointer"
                     title="Toggle glasses on/off"
                   >
                     {showGlasses ? (
@@ -739,15 +756,15 @@ export default function VirtualTryOnClient({
                     <button
                       type="button"
                       onClick={handleSnapPhoto}
-                      className="px-4 py-2 bg-[#F15A24] hover:bg-[#d84817] text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-2 active:scale-95 border-2 border-white"
+                      className="px-4 py-2 bg-[#F15A24] hover:bg-[#d84817] text-white text-xs font-bold rounded-full shadow-xl flex items-center gap-2 active:scale-95 border-2 border-white cursor-pointer"
                     >
                       <Camera className="w-4 h-4" />
-                      <span>Capture / Freeze Photo</span>
+                      <span>Capture Photo</span>
                     </button>
                     <button
                       type="button"
                       onClick={stopLiveCamera}
-                      className="px-3 py-2 bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold rounded-full backdrop-blur-md active:scale-95 border border-white/20"
+                      className="px-3 py-2 bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold rounded-full backdrop-blur-md active:scale-95 border border-white/20 cursor-pointer"
                     >
                       Close Camera
                     </button>
@@ -772,15 +789,36 @@ export default function VirtualTryOnClient({
                 </div>
               </div>
 
-              {/* 1-Tap Quick Adjust Nudge Bar (Right under Mirror) */}
-              <div className="mt-3 p-2 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-1.5 text-xs">
+              {/* Status Message */}
+              {autoFitMessage && (
+                <div className="mt-2.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{autoFitMessage}</span>
+                </div>
+              )}
+
+              {/* 1-Tap Quick Adjust Nudge Bar & AI Auto-Fit Action */}
+              <div className="mt-3 p-2 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-1.5 text-xs flex-wrap">
+                {/* Primary AI Auto-Fit Action Button */}
+                {!isLiveCamera && (
+                  <button
+                    type="button"
+                    onClick={() => triggerAutoFit(faceImage)}
+                    disabled={isScanning}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F15A24] hover:bg-[#d84817] text-white text-xs font-bold shadow-sm active:scale-95 transition-all shrink-0 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-200 animate-spin" />
+                    <span>AI Auto-Fit</span>
+                  </button>
+                )}
+
                 {/* Size Controls */}
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] font-bold text-slate-500 uppercase mr-1">Size:</span>
                   <button
                     type="button"
                     onClick={() => nudgeScale(-5)}
-                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90 cursor-pointer"
                     title="Chota karein"
                   >
                     <Minus className="w-3.5 h-3.5" />
@@ -791,7 +829,7 @@ export default function VirtualTryOnClient({
                   <button
                     type="button"
                     onClick={() => nudgeScale(5)}
-                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90 cursor-pointer"
                     title="Bara karein"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -804,7 +842,7 @@ export default function VirtualTryOnClient({
                   <button
                     type="button"
                     onClick={() => nudgeY(-2)}
-                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90 cursor-pointer"
                     title="Oopar karein"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
@@ -812,7 +850,7 @@ export default function VirtualTryOnClient({
                   <button
                     type="button"
                     onClick={() => nudgeY(2)}
-                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 active:scale-90 cursor-pointer"
                     title="Neechay karein"
                   >
                     <ArrowDown className="w-3.5 h-3.5" />
@@ -823,7 +861,7 @@ export default function VirtualTryOnClient({
                       if (isCustomPhoto) triggerAutoFit(faceImage);
                       else handleSelectModel(activeModel);
                     }}
-                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#F15A24] font-bold border border-slate-200 active:scale-90 ml-1"
+                    className="p-1.5 rounded-lg bg-white hover:bg-slate-100 text-[#F15A24] font-bold border border-slate-200 active:scale-90 ml-1 cursor-pointer"
                     title="Re-center frame"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
@@ -836,7 +874,7 @@ export default function VirtualTryOnClient({
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   title="Download photo with glasses"
                 >
                   <Download className="w-3.5 h-3.5 text-[#F15A24]" />
@@ -880,6 +918,30 @@ export default function VirtualTryOnClient({
                 </div>
               )}
 
+              {/* Dedicated AI Auto-Fit Option Card */}
+              {isCustomPhoto && (
+                <div className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl border border-orange-200 flex items-center justify-between gap-2 shadow-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-[#F15A24] text-white shrink-0">
+                      <ScanFace className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-slate-900">AI Face Auto-Fit Option</div>
+                      <div className="text-[10px] text-slate-600 font-medium">Ankhon aur chehray par automatic adjust karein</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => triggerAutoFit(faceImage)}
+                    disabled={isScanning}
+                    className="px-3 py-2 bg-[#F15A24] hover:bg-[#d84817] text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-200 animate-spin" />
+                    <span>{isScanning ? "Scanning..." : "Auto-Fit Now"}</span>
+                  </button>
+                </div>
+              )}
+
               {/* Upload & Live Camera Buttons */}
               <input
                 ref={fileInputRef}
@@ -892,7 +954,7 @@ export default function VirtualTryOnClient({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center justify-center gap-1.5 py-3 px-3 border-2 border-dashed border-[#F15A24]/40 hover:border-[#F15A24] bg-orange-50/50 hover:bg-orange-50 rounded-2xl text-xs font-bold text-[#F15A24] transition-all"
+                  className="flex items-center justify-center gap-1.5 py-3 px-3 border-2 border-dashed border-[#F15A24]/40 hover:border-[#F15A24] bg-orange-50/50 hover:bg-orange-50 rounded-2xl text-xs font-bold text-[#F15A24] transition-all cursor-pointer"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Upload Selfie Photo</span>
@@ -901,7 +963,7 @@ export default function VirtualTryOnClient({
                 <button
                   type="button"
                   onClick={isLiveCamera ? stopLiveCamera : startLiveCamera}
-                  className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl text-xs font-bold transition-all border ${
+                  className={`flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl text-xs font-bold transition-all border cursor-pointer ${
                     isLiveCamera
                       ? "bg-red-500 hover:bg-red-600 text-white border-red-600 shadow-md"
                       : "bg-[#1B2A4A] hover:bg-[#142037] text-white border-[#1B2A4A]"
@@ -934,7 +996,7 @@ export default function VirtualTryOnClient({
                         key={m.id}
                         type="button"
                         onClick={() => handleSelectModel(m)}
-                        className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                        className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
                           isSelected
                             ? "border-[#F15A24] ring-2 ring-[#F15A24]/30 shadow-sm"
                             : "border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100"
@@ -986,7 +1048,7 @@ export default function VirtualTryOnClient({
                 <button
                   type="button"
                   onClick={() => handleAddToCart(false)}
-                  className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-[#1B2A4A] text-white text-xs font-bold rounded-xl hover:bg-[#142037] transition-all shadow-md active:scale-95"
+                  className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-[#1B2A4A] text-white text-xs font-bold rounded-xl hover:bg-[#142037] transition-all shadow-md active:scale-95 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4 text-orange-400" />
                   <span>Add to Cart</span>
@@ -995,7 +1057,7 @@ export default function VirtualTryOnClient({
                 <button
                   type="button"
                   onClick={() => handleAddToCart(true)}
-                  className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-[#F15A24] text-white text-xs font-bold rounded-xl hover:bg-[#d84817] transition-all shadow-md active:scale-95 shadow-orange-950/20"
+                  className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-[#F15A24] text-white text-xs font-bold rounded-xl hover:bg-[#d84817] transition-all shadow-md active:scale-95 shadow-orange-950/20 cursor-pointer"
                 >
                   <Zap className="w-4 h-4" />
                   <span>Buy Now (COD)</span>
@@ -1042,7 +1104,7 @@ export default function VirtualTryOnClient({
                   key={p.id}
                   type="button"
                   onClick={() => setSelectedProduct(p)}
-                  className={`text-left p-2.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                  className={`text-left p-2.5 rounded-2xl border transition-all flex flex-col justify-between cursor-pointer ${
                     isSelected
                       ? "border-[#F15A24] bg-orange-50/40 ring-2 ring-[#F15A24]/20 shadow-xs"
                       : "border-slate-200 hover:border-slate-300 bg-white"

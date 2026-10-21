@@ -57,7 +57,6 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
   }
 
   scriptLoadingPromise = new Promise((resolve, reject) => {
-    // If already in DOM
     const existing = document.querySelector('script[src*="face_mesh.js"]');
     if (existing) {
       existing.addEventListener("load", () => resolve((window as any).FaceMesh));
@@ -121,10 +120,10 @@ export async function getFaceMeshInstance(): Promise<any> {
 
     const lm = results.multiFaceLandmarks[0];
 
-    // Left eye
+    // Left eye outer 33, inner 133, pupil 468
     const leftEyeOuter = lm[33];
     const leftEyeInner = lm[133];
-    // Right eye
+    // Right eye inner 362, outer 263, pupil 473
     const rightEyeInner = lm[362];
     const rightEyeOuter = lm[263];
 
@@ -197,6 +196,15 @@ export async function getFaceMeshInstance(): Promise<any> {
 }
 
 /**
+ * Warm up FaceMesh in the background as soon as page opens
+ */
+export function warmupFaceMesh(): void {
+  if (typeof window !== "undefined") {
+    getFaceMeshInstance().catch(() => {});
+  }
+}
+
+/**
  * Determines face shape and style recommendation
  */
 function analyzeFaceShape(
@@ -246,14 +254,13 @@ function analyzeFaceShape(
 }
 
 /**
- * Runs FaceMesh detection safely without race conditions or memory leaks
+ * Runs FaceMesh detection safely on Image, Video or Canvas
  */
 export async function detectFaceLandmarks(
   source: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
 ): Promise<FaceDetectionResult | null> {
   if (typeof window === "undefined") return null;
 
-  // If already processing a frame, skip to maintain real-time performance
   if (isBusyProcessing) {
     return null;
   }
@@ -266,26 +273,31 @@ export async function detectFaceLandmarks(
 
     // Convert Image elements to an offscreen canvas to guarantee valid pixel buffer
     let inputSource: any = source;
-    if (source instanceof HTMLImageElement) {
+    if (
+      source instanceof HTMLImageElement ||
+      (source as any).tagName === "IMG" ||
+      typeof (source as any).naturalWidth !== "undefined"
+    ) {
+      const img = source as HTMLImageElement;
       const canvas = document.createElement("canvas");
-      canvas.width = source.naturalWidth || source.width || 640;
-      canvas.height = source.naturalHeight || source.height || 480;
+      canvas.width = img.naturalWidth || img.width || 640;
+      canvas.height = img.naturalHeight || img.height || 480;
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         inputSource = canvas;
       }
     }
 
     return new Promise((resolve) => {
-      // Guard timer
+      // 8 second safety guard timer
       const timer = setTimeout(() => {
         if (isBusyProcessing) {
           isBusyProcessing = false;
           currentDetectionResolver = null;
           resolve(null);
         }
-      }, 3500);
+      }, 8000);
 
       currentDetectionResolver = (result) => {
         clearTimeout(timer);
@@ -339,7 +351,6 @@ export function calculateEyewearTransform(
 
   // Convert normalized landmark (0-1) to pixel in viewport container
   const toContainerPixelX = (normX: number) => {
-    // If live camera is mirrored horizontally (-scale-x-100)
     const effectiveX = isMirrored ? 1 - normX : normX;
     return effectiveX * renderedWidth - offsetX;
   };
