@@ -19,6 +19,14 @@ export interface FaceDetectionResult {
   faceShape: "Oval" | "Round" | "Square" | "Heart" | "Diamond";
   faceShapeRecommendation: string;
   confidence: number;
+  faceBox: {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+    width: number;
+    height: number;
+  };
 }
 
 export interface EyewearTransform {
@@ -28,9 +36,11 @@ export interface EyewearTransform {
   rotation: number; // degrees (-35 to +35)
 }
 
-// MediaPipe FaceMesh instance cache
+// MediaPipe FaceMesh singleton state
 let faceMeshInstance: any = null;
 let scriptLoadingPromise: Promise<any> | null = null;
+let currentDetectionResolver: ((result: FaceDetectionResult | null) => void) | null = null;
+let isBusyProcessing = false;
 
 /**
  * Dynamically loads MediaPipe FaceMesh from CDN if not already loaded on window
@@ -47,6 +57,7 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
   }
 
   scriptLoadingPromise = new Promise((resolve, reject) => {
+    // If already in DOM
     const existing = document.querySelector('script[src*="face_mesh.js"]');
     if (existing) {
       existing.addEventListener("load", () => resolve((window as any).FaceMesh));
@@ -64,7 +75,7 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
     };
 
     script.onerror = (err) => {
-      console.warn("Failed to load MediaPipe from CDN:", err);
+      console.warn("Failed to load MediaPipe FaceMesh:", err);
       reject(err);
     };
 
@@ -75,7 +86,7 @@ export async function loadMediaPipeFaceMesh(): Promise<any> {
 }
 
 /**
- * Initializes or returns the cached FaceMesh instance
+ * Initializes and configures the singleton FaceMesh instance
  */
 export async function getFaceMeshInstance(): Promise<any> {
   if (faceMeshInstance) return faceMeshInstance;
@@ -92,15 +103,101 @@ export async function getFaceMeshInstance(): Promise<any> {
   faceMeshInstance.setOptions({
     maxNumFaces: 1,
     refineLandmarks: true,
-    minDetectionConfidence: 0.4,
-    minTrackingConfidence: 0.4,
+    minDetectionConfidence: 0.35,
+    minTrackingConfidence: 0.35,
+  });
+
+  // Register onResults handler once
+  faceMeshInstance.onResults((results: any) => {
+    if (!currentDetectionResolver) return;
+    const resolver = currentDetectionResolver;
+    currentDetectionResolver = null;
+    isBusyProcessing = false;
+
+    if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+      resolver(null);
+      return;
+    }
+
+    const lm = results.multiFaceLandmarks[0];
+
+    // Left eye
+    const leftEyeOuter = lm[33];
+    const leftEyeInner = lm[133];
+    // Right eye
+    const rightEyeInner = lm[362];
+    const rightEyeOuter = lm[263];
+
+    const leftEye = lm[468] || {
+      x: (leftEyeOuter.x + leftEyeInner.x) / 2,
+      y: (leftEyeOuter.y + leftEyeInner.y) / 2,
+      z: (leftEyeOuter.z + leftEyeInner.z) / 2,
+    };
+
+    const rightEye = lm[473] || {
+      x: (rightEyeOuter.x + rightEyeInner.x) / 2,
+      y: (rightEyeOuter.y + rightEyeInner.y) / 2,
+      z: (rightEyeOuter.z + rightEyeInner.z) / 2,
+    };
+
+    // Nose bridge landmark 168 (right between the eyes, where eyewear bridge sits)
+    const noseBridge = lm[168] || lm[6] || {
+      x: (leftEye.x + rightEye.x) / 2,
+      y: (leftEye.y + rightEye.y) / 2,
+      z: 0,
+    };
+
+    const leftTemple = lm[234];
+    const rightTemple = lm[454];
+    const forehead = lm[10];
+    const chin = lm[152];
+    const leftJaw = lm[172] || lm[58];
+    const rightJaw = lm[397] || lm[288];
+
+    const eyeDistanceNorm = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
+    const estimatedPd = Math.round(60 + eyeDistanceNorm * 15);
+
+    const { shape, recommendation } = analyzeFaceShape(
+      forehead,
+      chin,
+      leftTemple,
+      rightTemple,
+      leftJaw,
+      rightJaw
+    );
+
+    // Calculate face bounding box in normalized coordinates (0..1)
+    const faceBox = {
+      top: forehead.y,
+      bottom: chin.y,
+      left: leftTemple.x,
+      right: rightTemple.x,
+      width: Math.abs(rightTemple.x - leftTemple.x),
+      height: Math.abs(chin.y - forehead.y),
+    };
+
+    resolver({
+      landmarks: lm,
+      leftEye,
+      rightEye,
+      noseBridge,
+      leftTemple,
+      rightTemple,
+      chin,
+      forehead,
+      pupillaryDistanceMm: Math.min(72, Math.max(56, estimatedPd)),
+      faceShape: shape,
+      faceShapeRecommendation: recommendation,
+      confidence: 0.98,
+      faceBox,
+    });
   });
 
   return faceMeshInstance;
 }
 
 /**
- * Determines face shape and style recommendation based on landmarks
+ * Determines face shape and style recommendation
  */
 function analyzeFaceShape(
   forehead: { x: number; y: number },
@@ -149,114 +246,69 @@ function analyzeFaceShape(
 }
 
 /**
- * Runs FaceMesh detection on an Image or Video element
+ * Runs FaceMesh detection safely without race conditions or memory leaks
  */
 export async function detectFaceLandmarks(
-  source: HTMLImageElement | HTMLVideoElement
+  source: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
 ): Promise<FaceDetectionResult | null> {
+  if (typeof window === "undefined") return null;
+
+  // If already processing a frame, skip to maintain real-time performance
+  if (isBusyProcessing) {
+    return null;
+  }
+
   try {
     const mesh = await getFaceMeshInstance();
     if (!mesh) return null;
 
+    isBusyProcessing = true;
+
+    // Convert Image elements to an offscreen canvas to guarantee valid pixel buffer
+    let inputSource: any = source;
+    if (source instanceof HTMLImageElement) {
+      const canvas = document.createElement("canvas");
+      canvas.width = source.naturalWidth || source.width || 640;
+      canvas.height = source.naturalHeight || source.height || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        inputSource = canvas;
+      }
+    }
+
     return new Promise((resolve) => {
-      let isResolved = false;
-
+      // Guard timer
       const timer = setTimeout(() => {
-        if (!isResolved) {
-          isResolved = true;
+        if (isBusyProcessing) {
+          isBusyProcessing = false;
+          currentDetectionResolver = null;
           resolve(null);
         }
-      }, 5000);
+      }, 3500);
 
-      mesh.onResults((results: any) => {
-        if (isResolved) return;
-        isResolved = true;
+      currentDetectionResolver = (result) => {
         clearTimeout(timer);
+        resolve(result);
+      };
 
-        if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-          resolve(null);
-          return;
-        }
-
-        const lm = results.multiFaceLandmarks[0];
-
-        const leftEyeOuter = lm[33];
-        const leftEyeInner = lm[133];
-        const rightEyeInner = lm[362];
-        const rightEyeOuter = lm[263];
-
-        const leftEye = lm[468] || {
-          x: (leftEyeOuter.x + leftEyeInner.x) / 2,
-          y: (leftEyeOuter.y + leftEyeInner.y) / 2,
-          z: (leftEyeOuter.z + leftEyeInner.z) / 2,
-        };
-
-        const rightEye = lm[473] || {
-          x: (rightEyeOuter.x + rightEyeInner.x) / 2,
-          y: (rightEyeOuter.y + rightEyeInner.y) / 2,
-          z: (rightEyeOuter.z + rightEyeInner.z) / 2,
-        };
-
-        // Landmark 168 is top of nose bridge between pupils
-        const noseBridge = lm[168] || lm[6] || {
-          x: (leftEye.x + rightEye.x) / 2,
-          y: (leftEye.y + rightEye.y) / 2,
-          z: 0,
-        };
-
-        const leftTemple = lm[234];
-        const rightTemple = lm[454];
-        const forehead = lm[10];
-        const chin = lm[152];
-        const leftJaw = lm[172] || lm[58];
-        const rightJaw = lm[397] || lm[288];
-
-        const eyeDistanceNorm = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
-        const estimatedPd = Math.round(60 + eyeDistanceNorm * 15);
-
-        const { shape, recommendation } = analyzeFaceShape(
-          forehead,
-          chin,
-          leftTemple,
-          rightTemple,
-          leftJaw,
-          rightJaw
-        );
-
-        resolve({
-          landmarks: lm,
-          leftEye,
-          rightEye,
-          noseBridge,
-          leftTemple,
-          rightTemple,
-          chin,
-          forehead,
-          pupillaryDistanceMm: Math.min(72, Math.max(56, estimatedPd)),
-          faceShape: shape,
-          faceShapeRecommendation: recommendation,
-          confidence: 0.98,
-        });
-      });
-
-      mesh.send({ image: source }).catch((err: any) => {
-        console.warn("MediaPipe send error:", err);
-        if (!isResolved) {
-          isResolved = true;
-          clearTimeout(timer);
-          resolve(null);
-        }
+      mesh.send({ image: inputSource }).catch((err: any) => {
+        clearTimeout(timer);
+        isBusyProcessing = false;
+        currentDetectionResolver = null;
+        resolve(null);
       });
     });
   } catch (error) {
-    console.error("detectFaceLandmarks error:", error);
+    isBusyProcessing = false;
+    currentDetectionResolver = null;
     return null;
   }
 }
 
 /**
  * Converts detected face landmarks into exact CSS percentages for frame position,
- * scale, and rotation, compensating for object-cover image rendering and zoom.
+ * scale, and rotation, compensating for object-cover image rendering and live selfie mirroring.
  */
 export function calculateEyewearTransform(
   detection: FaceDetectionResult,
@@ -265,10 +317,11 @@ export function calculateEyewearTransform(
   imageNaturalWidth: number,
   imageNaturalHeight: number,
   imageZoom: number = 1.0,
-  panOffsetY: number = 0
+  panOffsetY: number = 0,
+  isMirrored: boolean = false
 ): EyewearTransform {
   if (!containerWidth || !containerHeight || !imageNaturalWidth || !imageNaturalHeight) {
-    return { posX: 50, posY: 38, scale: 100, rotation: 0 };
+    return { posX: 50, posY: 38, scale: 75, rotation: 0 };
   }
 
   // Calculate object-cover base scaling
@@ -285,7 +338,12 @@ export function calculateEyewearTransform(
   const offsetY = (renderedHeight - containerHeight) / 2 - panOffsetY;
 
   // Convert normalized landmark (0-1) to pixel in viewport container
-  const toContainerPixelX = (normX: number) => normX * renderedWidth - offsetX;
+  const toContainerPixelX = (normX: number) => {
+    // If live camera is mirrored horizontally (-scale-x-100)
+    const effectiveX = isMirrored ? 1 - normX : normX;
+    return effectiveX * renderedWidth - offsetX;
+  };
+
   const toContainerPixelY = (normY: number) => normY * renderedHeight - offsetY;
 
   // Nose bridge in container pixels
@@ -294,33 +352,37 @@ export function calculateEyewearTransform(
 
   // Convert to container percentage (0-100)
   const posX = (bridgePxX / containerWidth) * 100;
-  // Sit comfortably across pupils & bridge
-  const posY = (bridgePxY / containerHeight) * 100 - 0.5;
+  // Frame bridge sits right on the top of the nose bridge
+  const posY = (bridgePxY / containerHeight) * 100 - 0.4;
 
-  // Face tilt angle (rotation) based on pupils
+  // Left & right eye pixel positions
   const leftEyePxX = toContainerPixelX(detection.leftEye.x);
   const leftEyePxY = toContainerPixelY(detection.leftEye.y);
   const rightEyePxX = toContainerPixelX(detection.rightEye.x);
   const rightEyePxY = toContainerPixelY(detection.rightEye.y);
 
+  // Eye tilt angle
   const deltaX = rightEyePxX - leftEyePxX;
   const deltaY = rightEyePxY - leftEyePxY;
-  const rotation = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
+  let rotation = (Math.atan2(deltaY, deltaX) * 180) / Math.PI;
 
-  // Pupillary Distance in container pixels:
+  if (isMirrored) {
+    rotation = -rotation;
+  }
+
+  // Pupillary distance on screen
   const pupilDistPx = Math.hypot(deltaX, deltaY);
 
-  // Anatomical Eyewear Frame Width = Pupillary Distance * 2.20
-  // Standard adult human PD is 63mm, frame width is 138mm (138 / 63 = 2.19)
+  // Real-life eyewear ratio: Frame width = Pupil Distance * 2.22
   const targetFrameWidthPx = pupilDistPx * 2.22;
   const targetFrameWidthPct = (targetFrameWidthPx / containerWidth) * 100;
 
-  // Since frame CSS width = `60 * (scale / 100)`%:
+  // Base frame CSS is width: `60 * (scale / 100)`%
   // scale = (targetFrameWidthPct / 60) * 100
   let calculatedScale = Math.round((targetFrameWidthPct / 60) * 100);
 
-  // Realistic boundary: from 20% (distant body shot) up to 180% (close up face)
-  calculatedScale = Math.min(180, Math.max(20, calculatedScale));
+  // Safety boundaries (clamp to realistic range 20% to 160%)
+  calculatedScale = Math.min(160, Math.max(20, calculatedScale));
 
   return {
     posX: Math.min(95, Math.max(5, posX)),
