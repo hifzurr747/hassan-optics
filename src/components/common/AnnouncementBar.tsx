@@ -1,4 +1,5 @@
-import { MapPin, Phone, Truck, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Phone, Truck, ShieldCheck, Package } from "lucide-react";
 import { STORE_INFO } from "@/lib/constants";
 import { formatPrice, FREE_SHIPPING_THRESHOLD } from "@/lib/utils";
 
@@ -19,8 +20,16 @@ export default function AnnouncementBar() {
           </span>
         </div>
 
-        {/* Right: Physical store & phone */}
-        <div className="flex items-center gap-3 text-slate-300 shrink-0">
+        {/* Right: Track order, physical store & phone */}
+        <div className="flex items-center gap-2.5 sm:gap-3 text-slate-300 shrink-0">
+          <Link
+            href="/track-order"
+            className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors font-medium hover:underline"
+          >
+            <Package className="w-3.5 h-3.5 text-orange-400" />
+            <span>Track Order</span>
+          </Link>
+          <span className="hidden md:inline text-navy-400">•</span>
           <span className="hidden md:flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 text-orange-400" />
             <span>Faisal Plaza, Mianwali</span>

@@ -29,15 +29,15 @@ export default function Navbar() {
     { name: "Sunglasses", href: "/sunglasses" },
     { name: "Virtual Try-On", href: "/virtual-try-on", isNew: true },
     { name: "Contact Lenses", href: "/contact-lenses" },
-    { name: "Face Shape Guide", href: "/face-shape-guide", desktopHideLg: true },
-    { name: "Book Eye Test", href: "/book-eye-test", highlight: true, shortName: "Eye Test" },
-    { name: "Track Order", href: "/track-order", desktopHideLg: true },
+    { name: "Face Shape Guide", href: "/face-shape-guide", desktop2xlOnly: true },
+    { name: "Book Eye Test", href: "/book-eye-test", highlight: true },
+    { name: "Track Order", href: "/track-order", mobileOnly: true },
   ];
 
   return (
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs print:hidden">
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-4 lg:px-6 xl:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-1.5 sm:gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4">
           {/* Brand Logo with Official Hassan Optics Logo */}
           <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
             <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl overflow-hidden bg-white shadow-xs border border-slate-200 p-0.5 shrink-0 group-hover:border-[#F15A24]/40 transition-colors">
@@ -60,8 +60,10 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1.5">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {navLinks.map((link) => {
+              if (link.mobileOnly) return null;
+
               const isActive =
                 link.href === "/"
                   ? pathname === "/"
@@ -72,11 +74,10 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className="flex items-center gap-1 px-2 xl:px-3 py-1.5 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition border border-orange-200 whitespace-nowrap shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 transition border border-orange-200 whitespace-nowrap shrink-0"
                   >
                     <Calendar className="w-3.5 h-3.5 shrink-0" />
-                    <span className="hidden xl:inline">{link.name}</span>
-                    <span className="xl:hidden">{link.shortName || link.name}</span>
+                    <span>{link.name}</span>
                   </Link>
                 );
               }
@@ -86,7 +87,7 @@ export default function Navbar() {
                   <Link
                     key={link.name}
                     href={link.href}
-                    className="flex items-center gap-1 px-1.5 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-bold text-slate-800 hover:text-[#F15A24] transition whitespace-nowrap shrink-0 group"
+                    className="flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-bold text-slate-800 hover:text-[#F15A24] transition whitespace-nowrap shrink-0 group"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-[#F15A24] group-hover:rotate-12 transition-transform shrink-0" />
                     <span>{link.name}</span>
@@ -101,8 +102,8 @@ export default function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`px-1.5 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-semibold transition whitespace-nowrap shrink-0 ${
-                    link.desktopHideLg ? "hidden xl:inline-block" : "inline-block"
+                  className={`px-2 xl:px-2.5 py-1.5 rounded-lg text-xs xl:text-sm font-semibold transition whitespace-nowrap shrink-0 ${
+                    link.desktop2xlOnly ? "hidden 2xl:inline-block" : "inline-block"
                   } ${
                     isActive
                       ? "text-orange-500 bg-orange-50/60 font-bold"
@@ -116,12 +117,12 @@ export default function Navbar() {
           </nav>
 
           {/* Right Action Icons (Always fully visible, never clipped) */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 ml-auto lg:ml-0 pl-1">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             {/* Quick Catalog Search Link */}
             <Link
               href="/shop"
               aria-label="Search Catalog"
-              className="p-1.5 sm:p-2.5 text-slate-600 hover:text-navy-900 hover:bg-slate-100 rounded-full transition shrink-0"
+              className="p-2 text-slate-600 hover:text-navy-900 hover:bg-slate-100 rounded-full transition shrink-0"
             >
               <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             </Link>
@@ -130,10 +131,10 @@ export default function Navbar() {
             <button
               onClick={openCart}
               aria-label="View Cart"
-              className="relative flex items-center gap-1.5 sm:gap-2 bg-navy-900 hover:bg-navy-800 text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-full font-medium text-xs sm:text-sm transition shadow-sm active:scale-95 shrink-0"
+              className="relative flex items-center gap-1.5 sm:gap-2 bg-navy-900 hover:bg-navy-800 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition shadow-sm active:scale-95 shrink-0"
             >
               <ShoppingBag className="w-4 h-4 text-orange-400 shrink-0" />
-              <span className="hidden sm:inline">Cart</span>
+              <span>Cart</span>
               {itemCount > 0 && (
                 <span className="bg-orange-500 text-white text-[10px] sm:text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center animate-in zoom-in shrink-0">
                   {itemCount}
@@ -144,7 +145,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 sm:p-2 text-slate-700 hover:text-navy-900 hover:bg-slate-100 rounded-lg transition shrink-0"
+              className="lg:hidden p-2 text-slate-700 hover:text-navy-900 hover:bg-slate-100 rounded-lg transition shrink-0"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
